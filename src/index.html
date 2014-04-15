@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crowdemotion JS rest api</title>
+</head>
+<body>
+<script src="./jquery.min.js"></script>
+<script src="./sha256.js"></script>
+<script src="./enc-base64-min.js"></script>
+<script src="./store.js"></script>
+<script src="./CEClient.js"></script>
+<script>
+    (function() {
+
+        var ceclient = new CEClient();
+
+        //LOGIN
+        console.log('LOGGING IN');
+        ceclient.login('username','password',
+                function(){
+                    //UPLOAD VIDEO
+                    console.log('UPLOAD VIDEO');
+                    var rand  = Math.floor((Math.random()*10000000000)+1);
+                    ceclient.uploadLink('jstest_'+rand+'.mp4', execWTS);
+                });
+
+        //WRITE TIME SERIES
+        var execWTS = function(){
+            console.log('WRITE TIME SERIES');
+            ceclient.writeTimeSeries(ceclient.responseId, 2, [0.43333, 0.877223, 0.222244, 0.1] , execRTS)
+        };
+
+        //READ TIME SERIES
+        var execRTS = function(){
+            console.log('READ TIME SERIES');
+            ceclient.readTimeseries(ceclient.responseId, 2 , execLogout);
+        };
+
+        //LOGOUT
+        var execLogout = function(res){
+            console.log('Results from timeseries');
+            console.log(res);
+            console.log('LOGOUT');
+            ceclient.logout();
+        };
+
+    })();
+</script>
+
+</body>
+</html>
