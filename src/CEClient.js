@@ -68,16 +68,16 @@ function CEClient() {
     }
 
 
-    this.readTimeseries = function (responseId, metricId, cb) {
+    this.readTimeseries = function (responseId, metricId, cb, normalize) {
         var metricquery = '';
-        if (Array.isArray(metricId)){
-            for (var i = 0; i < metricId.length; i++) {
-                metricquery  = metricquery + "&metric_id=" +  metricId[i];
-            }
-        }else{
-            metricquery = "&metric_id="+ metricId;
-        }
-        javaRest.get("timeseries?response_id="+responseId+metricquery, null,
+
+        if (Array.isArray(metricId)){ for (var i = 0; i < metricId.length; i++) { metricquery  = metricquery + "&metric_id=" +  metricId[i];}
+        }else{ metricquery = "&metric_id="+ metricId;}
+
+        if( normalize == undefined){ normalize = '&normalize=false';}
+        else{ normalize = '&normalize='+normalize.toString();}
+
+        javaRest.get("timeseries?response_id="+responseId+metricquery+normalize, null,
             function (res){
                 if(cb) {cb(res);}
             },function (res){
