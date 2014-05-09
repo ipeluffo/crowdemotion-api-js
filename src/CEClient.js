@@ -86,6 +86,22 @@ function CEClient() {
         );
     }
 
+    this.readMetrics = function (metricId, cb) {
+        var url = "metric";
+        if(metricId == undefined || metricId == null){
+            url = "metric";
+        }else{
+            url = "metric/?metric_id="+metricId;
+        }
+        javaRest.get(url, null,
+            function (res){
+                if(cb) {cb(res);}
+            },function (res){
+                if(cb) {cb(res);}
+            }
+        );
+    }
+
     /**
      * Console log
      * @param msg
