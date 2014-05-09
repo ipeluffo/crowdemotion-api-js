@@ -11,6 +11,7 @@ function CEClient() {
     this.last_ms = Date.now();
     this.token = null;
     this.userId = null;
+    this.debug = false;
 
 
     this.logout = function (){
@@ -39,14 +40,14 @@ function CEClient() {
      * Upload a video using a full http url
      * @param mediaURL
      */
-     this.uploadLink = function (mediaURL, cb) {
-         var ceclient = this;
+    this.uploadLink = function (mediaURL, cb) {
+        var ceclient = this;
 
 
-         javaRest.facevideo.uploadLink(mediaURL, function (res){
-             ceclient.responseId = res.responseId;
-             if(cb) cb();
-         });
+        javaRest.facevideo.uploadLink(mediaURL, function (res){
+            ceclient.responseId = res.responseId;
+            if(cb) cb(res);
+        });
 
 
     }
@@ -61,14 +62,22 @@ function CEClient() {
         javaRest.postAuth('timeseries?response_id='+ responseId +'&metric_id=' + metricId, {'data': data},
             function(res){},
             function (res){
-                if(cb) cb();
+                if(cb) cb(res);
             }
         );
     }
 
 
-    this.readTimeseries = function (responseId, metricId, cb) {        
-        javaRest.get("timeseries?response_id="+responseId+"&metric_id="+ metricId, null,
+    this.readTimeseries = function (responseId, metricId, cb) {
+        var metricquery = '';
+        if (Array.isArray(metricId)){
+            for (var i = 0; i < metricId.length; i++) {
+                metricquery  = metricquery + "&metric_id=" +  metricId[i];
+            }
+        }else{
+            metricquery = "&metric_id="+ metricId;
+        }
+        javaRest.get("timeseries?response_id="+responseId+metricquery, null,
             function (res){
                 if(cb) {cb(res);}
             },function (res){
@@ -90,7 +99,7 @@ function CEClient() {
         }
     }
 
-    
+
 }
 //==========================JAVAREST==========================================
 /*
@@ -130,7 +139,7 @@ javaRest.get = function (url, data, success, error) {
         type: "GET",
         data: data,
         crossDomain: true,
-
+        /* async: false, */
         headers: {
             'Authorization' : authorization,
             'x-ce-rest-date' : time,
@@ -438,9 +447,9 @@ javaRest.user.login = function (email, password, callback) {
             "password" : password
         },
         function (response) { //success
-            javaRest.cookie.set('token', response.token)
-            javaRest.cookie.set('userId', response.userId)
-            javaRest.cookie.set('email', email)
+            javaRest.cookie.set('token', response.token);
+            javaRest.cookie.set('userId', response.userId);
+            javaRest.cookie.set('email', email);
             response.success = true;
             callback(response)
 
@@ -481,10 +490,10 @@ javaRest.user.loginSocial = function (accessToken, callback) {
  * Delete the users cookies.
  */
 javaRest.user.logout = function () {
-    javaRest.cookie.remove('token')
-    javaRest.cookie.remove('userId')
-    javaRest.cookie.remove('email')
-    store.clear()
+    javaRest.cookie.remove('token');
+    javaRest.cookie.remove('userId');
+    javaRest.cookie.remove('email');
+    store.clear();
     //window.location = 'index.html'
 }
 
