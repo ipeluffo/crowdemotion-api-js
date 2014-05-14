@@ -134,7 +134,7 @@ function javaRest() {
 
 }
 
-javaRest.jr_baseurl = "https://api.crowdemotion.co.uk/";
+javaRest.jr_baseurl = "https://api.crowdemotion.co.uk/v1/";
 
 /**
  * Wrap the API so we can proxy calls while testing.
