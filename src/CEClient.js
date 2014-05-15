@@ -11,18 +11,22 @@ function CEClient() {
     this.last_ms = Date.now();
     this.token = null;
     this.userId = null;
-    this.debug = false;
+
 
 
     this.logout = function (){
         javaRest.user.logout();
     }
 
+    this.init  = function(debug, http){
+        javaRest(debug, http);
+    }
     /**
      * user login
      */
     this.login = function(username, password, cb) {
         var ceclient = this;
+
         javaRest.user.login(username,password, function (response) {
             if (response.success=true) {
                 ceclient.userId = response.userId;
@@ -126,16 +130,52 @@ function CEClient() {
  */
 
 
+javaRest.protocol = "https";
+javaRest.domain = "api.crowdemotion.co.uk";
+javaRest.version = "v1";
+javaRest.debug = false;
 
 /**
  * Singleton used for Namespace
  */
-function javaRest() {
+function javaRest(debug, http_fallback) {
+    if(debug==undefined) debug = false;
+    if(http_fallback==undefined) http_fallback = false;
+
+    javaRest.debug = debug;
+
+    if(http_fallback) {
+        var connection = javaRest.httpGet('https://'+javaRest.domain+'/'+javaRest.version+'/');
+        if (connection) {
+            javaRest.protocol = 'https';
+        } else {
+            javaRest.protocol = 'http';
+        }
+    }
+}
+
+javaRest.httpGet = function (theUrl){
+    var xmlHttp = null;
+
+
+    try{
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false );
+        xmlHttp.send( null );
+        return (xmlHttp.statusText=='OK') ? true : false;
+    }catch(e){
+        return false;
+    }
 
 }
 
-javaRest.jr_baseurl = "https://api.crowdemotion.co.uk/v1/";
-
+javaRest.baseurl = function(){
+    if(this.debug == true){
+        return this.protocol + '://' + this.domain + '/'; // + this.version + '/';
+    }else{
+        return this.protocol + '://' + this.domain + '/' + this.version + '/';
+    }
+}
 /**
  * Wrap the API so we can proxy calls while testing.
  */
@@ -151,7 +191,7 @@ javaRest.get = function (url, data, success, error) {
 
 
     var request = $.ajax({
-        url: this.jr_baseurl + url,
+        url: this.baseurl() + url,
         type: "GET",
         data: data,
         crossDomain: true,
@@ -230,7 +270,7 @@ javaRest.isIos = function () {
 javaRest.post = function (url, data, success, error) {
 
     $.ajax({
-        url:this.jr_baseurl+url,
+        url: this.baseurl()+url,
         type: "POST",
         crossDomain: true,
         contentType: "application/json", // send as JSON
@@ -257,7 +297,7 @@ javaRest.postAuth = function (url, data, success, error) {
 
 
     $.ajax({
-        url:this.jr_baseurl+url,
+        url: this.baseurl()+url,
         type: "POST",
         contentType: "application/json", // send as JSON
         data: JSON.stringify(data),
@@ -286,7 +326,7 @@ javaRest.put = function (url, data, success, error) {
     var authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash)
 
     $.ajax({
-        url:this.jr_baseurl+url,
+        url: this.baseurl()+url,
         type: "PUT",
         contentType: "application/json", // send as JSON
         data: JSON.stringify(data),
