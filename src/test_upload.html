@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crowdemotion JS rest api</title>
+</head>
+<body>
+<script src="./jquery.min.js"></script>
+<script src="./sha256.js"></script>
+<script src="./enc-base64-min.js"></script>
+<script src="./store.js"></script>
+<script src="./CEClient.js"></script>
+<script>
+
+
+
+
+
+    $(document).ready(function(){
+
+        var ceclient = new CEClient();
+
+        //LOGIN
+        console.log('LOGGING IN');
+        ceclient.init(true, true);
+        ceclient.login('username','password',
+                function(){
+                    //UPLOAD VIDEO
+
+                });
+
+        //LOGOUT
+        var execLogout = function(res){
+            console.log('Results from timeseries');
+            console.log(res);
+            console.log('LOGOUT');
+            ceclient.logout();
+        };
+
+
+        $('#sendbuntton').click(function(){
+            ceclient.sendFile("fileinput");
+        });
+    });
+
+</script>
+<input type="file" name="fileinput" id="fileinput" />
+<input type="submit" id="sendbuntton">
+</body>
+</html>

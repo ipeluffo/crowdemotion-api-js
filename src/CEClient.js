@@ -56,6 +56,23 @@ function CEClient() {
 
     }
 
+    this.sendFile =function (element_id, cb){
+        var ceclient = this;
+
+        var file = document.getElementById(element_id).files[0]; //Files[0] = 1st file
+        var reader = new FileReader();
+        reader.readAsText(file, 'UTF-8');
+        reader.onload = (function(theFile){
+            //var fileName = theFile.name;
+            javaRest.facevideo.upload(theFile, function (res){
+                ceclient.responseId = res.responseId;
+                if(cb) cb(res);
+            });
+        })(file);
+    }
+
+
+
     /**
      *
      * @param responseId numeric id
@@ -617,7 +634,7 @@ javaRest.user.updateName = function (value, callback) {
         })
 }
 
-javaRest.facevideo = {}
+ javaRest.facevideo = {}
 
 
 /**
@@ -653,8 +670,8 @@ javaRest.facevideo.upload = function(file, callback) {
 
 
     javaRest.postAuth(
-        'facevideo',
-        {'link': videoLink},
+        'facevideo/upload',
+        {'link': file},
         function(response) {
             if (callback) {
                 callback();
