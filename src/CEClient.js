@@ -671,7 +671,7 @@ javaRest.facevideo.upload = function(file, callback) {
 
     javaRest.postAuth(
         'facevideo/upload',
-        {'link': file},
+        {'file': file},
         function(response) {
             if (callback) {
                 callback();
