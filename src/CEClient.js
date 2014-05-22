@@ -112,8 +112,16 @@ function CEClient() {
         if(metricId == undefined || metricId == null){
             url = "metric";
         }else{
-            url = "metric/?metric_id="+metricId;
+            url = "metric/?";
+            if (Array.isArray(metricId)){
+                for (var i = 0; i < metricId.length; i++) {
+                    url  = url + "metric_id=" +  metricId[i] +"&";
+                }
+            }else{
+                url = "metric/?metric_id="+metricId;
+            }
         }
+
         javaRest.get(url, null,
             function (res){
                 if(cb) {cb(res);}
