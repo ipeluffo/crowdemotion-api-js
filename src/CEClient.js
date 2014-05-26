@@ -56,6 +56,23 @@ function CEClient() {
 
     }
 
+    this.sendFile =function (element_id, cb){
+        var ceclient = this;
+
+        var file = document.getElementById(element_id).files[0]; //Files[0] = 1st file
+        var reader = new FileReader();
+        reader.readAsText(file, 'UTF-8');
+        reader.onload = (function(theFile){
+            //var fileName = theFile.name;
+            javaRest.facevideo.upload(theFile, function (res){
+                ceclient.responseId = res.responseId;
+                if(cb) cb(res);
+            });
+        })(file);
+    }
+
+
+
     /**
      *
      * @param responseId numeric id
@@ -95,8 +112,16 @@ function CEClient() {
         if(metricId == undefined || metricId == null){
             url = "metric";
         }else{
-            url = "metric/?metric_id="+metricId;
+            url = "metric/?";
+            if (Array.isArray(metricId)){
+                for (var i = 0; i < metricId.length; i++) {
+                    url  = url + "metric_id=" +  metricId[i] +"&";
+                }
+            }else{
+                url = "metric/?metric_id="+metricId;
+            }
         }
+
         javaRest.get(url, null,
             function (res){
                 if(cb) {cb(res);}
@@ -145,7 +170,7 @@ function javaRest(debug, http_fallback) {
     javaRest.debug = debug;
 
     if(http_fallback) {
-        var connection = javaRest.httpGet('https://'+javaRest.domain+'/'+javaRest.version+'/');
+        var connection = javaRest.httpGet('https://'+javaRest.domain+'/');
         if (connection) {
             javaRest.protocol = 'https';
         } else {
@@ -170,18 +195,21 @@ javaRest.httpGet = function (theUrl){
 }
 
 javaRest.baseurl = function(){
-    if(this.debug == true){
-        return this.protocol + '://' + this.domain + '/'; // + this.version + '/';
-    }else{
-        return this.protocol + '://' + this.domain + '/' + this.version + '/';
-    }
+    return this.protocol + '://' + this.domain + '/' + this.version + '/';
+}
+javaRest.actionurl = function(actionurl){
+    var s = actionurl;
+    var n = s.indexOf('?');
+    actionurl = s.substring(0, n != -1 ? n : s.length);
+    console.log('action url: '+ javaRest.version + '/'+ actionurl)
+    return javaRest.version + '/'+ actionurl;
 }
 /**
  * Wrap the API so we can proxy calls while testing.
  */
 javaRest.get = function (url, data, success, error) {
 
-    var s = url; var n = s.indexOf('?'); var url_simple = s.substring(0, n != -1 ? n : s.length);
+    var url_simple = javaRest.actionurl(url);
 
     var time = javaRest.get_iso_date()
     var nonce = makeRandomString()
@@ -288,7 +316,7 @@ javaRest.post = function (url, data, success, error) {
  */
 javaRest.postAuth = function (url, data, success, error) {
 
-    var s = url; var n = s.indexOf('?'); var url_simple = s.substring(0, n != -1 ? n : s.length);
+    var url_simple = javaRest.actionurl(url);
 
     var time = javaRest.get_iso_date()
     var nonce = makeRandomString()
@@ -320,9 +348,11 @@ javaRest.postAuth = function (url, data, success, error) {
  */
 javaRest.put = function (url, data, success, error) {
 
+    var url_simple = javaRest.actionurl(url);
+
     var time = javaRest.get_iso_date()
     var nonce = makeRandomString()
-    var string_to_hash = javaRest.cookie.get('token') + ':' + url + ',PUT,' + time + "," + nonce
+    var string_to_hash = javaRest.cookie.get('token') + ':' + url_simple + ',PUT,' + time + "," + nonce
     var authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash)
 
     $.ajax({
@@ -653,8 +683,8 @@ javaRest.facevideo.upload = function(file, callback) {
 
 
     javaRest.postAuth(
-        'facevideo',
-        {'link': videoLink},
+        'facevideo/upload',
+        {'file': file},
         function(response) {
             if (callback) {
                 callback();
