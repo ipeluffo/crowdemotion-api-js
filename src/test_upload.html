@@ -26,6 +26,7 @@
                 function(){
                     //UPLOAD VIDEO
 
+                    console.log(ceclient.errorlog);
                 });
 
         //LOGOUT
@@ -37,13 +38,19 @@
         };
 
 
-        $('#sendbuntton').click(function(){
-            ceclient.sendFile("fileinput");
+        $('#sendbutton').click(function(){
+            //ceclient.sendFile("fileinput");
+
+            ceclient.uploadForm('form_upload');
         });
     });
 
 </script>
-<input type="file" name="fileinput" id="fileinput" />
-<input type="submit" id="sendbuntton">
+
+<form id="form_upload" method="post" enctype="multipart/form-data">
+<input type="file" name="file" id="file" />
+<input type="button" id="sendbutton" value="send">
+</form>
+
 </body>
 </html>
