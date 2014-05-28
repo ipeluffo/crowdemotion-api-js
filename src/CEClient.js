@@ -28,12 +28,12 @@ function CEClient() {
         var ceclient = this;
 
         javaRest.user.login(username,password, function (response) {
-            if (response.success=true) {
+            if (response.success) {
                 ceclient.userId = response.userId;
                 ceclient.token = response.token;
             } else {
-                ceclient.errorlog = ceclient.errorlog + "\n" + error;
-            };
+                ceclient.errorlog = ceclient.errorlog + "\n" + response.statusText + " ["+ response.status +"]: " + response.responseText;
+            }
             if(cb){ cb();}
 
         });
@@ -53,6 +53,12 @@ function CEClient() {
             if(cb) cb(res);
         });
 
+
+    }
+
+    this.uploadForm = function (form_id) {
+
+        javaRest.facevideo.uploadForm(form_id);
 
     }
 
@@ -204,19 +210,27 @@ javaRest.actionurl = function(actionurl){
     console.log('action url: '+ javaRest.version + '/'+ actionurl)
     return javaRest.version + '/'+ actionurl;
 }
+
+javaRest.getAuthData = function(method, url) {
+
+    var ret = {};
+
+    var url_simple = javaRest.actionurl(url);
+
+    ret.time = javaRest.get_iso_date();
+    ret.nonce = makeRandomString();
+    var string_to_hash = javaRest.cookie.get('token') + ':' + url_simple + ','+ method +',' + ret.time + "," + ret.nonce;
+    ret.authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash);
+
+    return ret;
+}
+
 /**
  * Wrap the API so we can proxy calls while testing.
  */
 javaRest.get = function (url, data, success, error) {
 
-    var url_simple = javaRest.actionurl(url);
-
-    var time = javaRest.get_iso_date()
-    var nonce = makeRandomString()
-    var string_to_hash = javaRest.cookie.get('token') + ':' + url_simple + ',GET,' + time + "," + nonce
-    var authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash)
-
-
+    var auth = javaRest.getAuthData('GET', url);
 
     var request = $.ajax({
         url: this.baseurl() + url,
@@ -225,9 +239,9 @@ javaRest.get = function (url, data, success, error) {
         crossDomain: true,
         /* async: false, */
         headers: {
-            'Authorization' : authorization,
-            'x-ce-rest-date' : time,
-            'nonce' : nonce
+            'Authorization' : auth.authorization,
+            'x-ce-rest-date' : auth.time,
+            'nonce' : auth.nonce
         },
         dataType: "json"
     })
@@ -316,13 +330,7 @@ javaRest.post = function (url, data, success, error) {
  */
 javaRest.postAuth = function (url, data, success, error) {
 
-    var url_simple = javaRest.actionurl(url);
-
-    var time = javaRest.get_iso_date()
-    var nonce = makeRandomString()
-    var string_to_hash = javaRest.cookie.get('token') + ':' + url_simple + ',POST,' + time + "," + nonce
-    var authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash)
-
+    var auth = javaRest.getAuthData('POST', url);
 
     $.ajax({
         url: this.baseurl()+url,
@@ -331,16 +339,24 @@ javaRest.postAuth = function (url, data, success, error) {
         data: JSON.stringify(data),
         crossDomain: true,
         headers: {
-            'Authorization' : authorization,
-            'x-ce-rest-date' : time ,
-            'nonce' : nonce
+            'Authorization' : auth.authorization,
+            'x-ce-rest-date' : auth.time ,
+            'nonce' : auth.nonce
         },
         dataType: "json",
         success : success,
         error : error
     })
+}
 
+javaRest.postAuthForm = function (url, form_id) {
 
+    var auth = javaRest.getAuthData('POST', url);
+
+    $('#'+form_id).
+        attr('action', this.baseurl()+url+'?Authorization='+encodeURIComponent(auth.authorization) +
+            '&x-ce-rest-date='+encodeURIComponent(auth.time) + '&nonce='+encodeURIComponent(auth.nonce)).
+        submit();
 }
 
 /**
@@ -348,12 +364,7 @@ javaRest.postAuth = function (url, data, success, error) {
  */
 javaRest.put = function (url, data, success, error) {
 
-    var url_simple = javaRest.actionurl(url);
-
-    var time = javaRest.get_iso_date()
-    var nonce = makeRandomString()
-    var string_to_hash = javaRest.cookie.get('token') + ':' + url_simple + ',PUT,' + time + "," + nonce
-    var authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash)
+    var auth = javaRest.getAuthData('PUT', url);
 
     $.ajax({
         url: this.baseurl()+url,
@@ -362,9 +373,9 @@ javaRest.put = function (url, data, success, error) {
         data: JSON.stringify(data),
         crossDomain: true,
         headers: {
-            'Authorization' : authorization,
-            'x-ce-rest-date' : time,
-            'nonce' : nonce
+            'Authorization' : auth.authorization,
+            'x-ce-rest-date' : auth.time,
+            'nonce' : auth.nonce
         },
         dataType: "json",
         success : success,
@@ -695,6 +706,12 @@ javaRest.facevideo.upload = function(file, callback) {
             callback(jqXHR)
         }
     )
+}
+
+javaRest.facevideo.uploadForm = function(form_id) {
+
+    javaRest.postAuthForm('facevideo/upload', form_id);
+
 }
 
 
