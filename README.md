@@ -1,4 +1,6 @@
 crowdemotion-api-js
 ====================
 
-This is CrowdEmotion REST API client for Javascript.
+CrowdEmotion RESTful API client for Javascript.
+
+This is intended as a very simple example of implementation.
