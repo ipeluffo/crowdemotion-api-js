@@ -165,6 +165,8 @@ javaRest.protocol = "https";
 javaRest.domain = "api.crowdemotion.co.uk";
 javaRest.version = "v1";
 javaRest.debug = false;
+javaRest.token = null;
+javaRest.userId = null;
 
 /**
  * Singleton used for Namespace
@@ -219,8 +221,16 @@ javaRest.getAuthData = function(method, url) {
 
     ret.time = javaRest.get_iso_date();
     ret.nonce = makeRandomString();
-    var string_to_hash = javaRest.cookie.get('token') + ':' + url_simple + ','+ method +',' + ret.time + "," + ret.nonce;
-    ret.authorization = javaRest.cookie.get('userId') + ':' + javaRest.hash(string_to_hash);
+    var tok = javaRest.cookie.get('token');
+    if(tok==undefined){
+        tok = this.token;
+    }
+    var uId = javaRest.cookie.get('userId');
+    if(uId==undefined){
+        uId = this.userId;
+    }
+    var string_to_hash = tok + ':' + url_simple + ','+ method +',' + ret.time + "," + ret.nonce;
+    ret.authorization = uId + ':' + javaRest.hash(string_to_hash);
 
     return ret;
 }
@@ -451,7 +461,9 @@ javaRest.user.create = function (firstName, emailAddress, password, lastName, ca
         },
         function (response) {
             javaRest.cookie.set('token', response.token)
+            this.token = response.token;
             javaRest.cookie.set('userId', response.userId)
+            this.userId = response.userId;
             javaRest.cookie.set('email', emailAddress)
             callback()
         },
@@ -526,7 +538,7 @@ javaRest.user.get = function (callback) {
  * @return {bool}
  */
 javaRest.user.is_logged_in = function () {
-    return !!javaRest.cookie.get('token')
+    return (!!javaRest.cookie.get('token') || !!this.token)
 }
 
 /**
@@ -545,7 +557,9 @@ javaRest.user.login = function (email, password, callback) {
         },
         function (response) { //success
             javaRest.cookie.set('token', response.token);
+            javaRest.token = response.token;
             javaRest.cookie.set('userId', response.userId);
+            javaRest.userId = response.userId;
             javaRest.cookie.set('email', email);
             response.success = true;
             callback(response)
@@ -572,7 +586,9 @@ javaRest.user.loginSocial = function (accessToken, callback) {
         },
         function (response) {
             javaRest.cookie.set('token', response.token)
+            javaRest.token = response.token;
             javaRest.cookie.set('userId', response.userId)
+            javaRest.userId = response.userId;
             callback()
 
         },
@@ -588,7 +604,9 @@ javaRest.user.loginSocial = function (accessToken, callback) {
  */
 javaRest.user.logout = function () {
     javaRest.cookie.remove('token');
+    this.token = null;
     javaRest.cookie.remove('userId');
+    this.userId = null;
     javaRest.cookie.remove('email');
     store.clear();
     //window.location = 'index.html'
