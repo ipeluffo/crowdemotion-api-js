@@ -137,6 +137,66 @@ function CEClient() {
         );
     }
 
+    this.getFvStatus = function(url,cb){
+        var ceclient = this;
+        javaRest.get(url, null,
+            function (res){
+                if(cb) {cb(res.status);}
+            },
+            function (res){
+                if(cb) {cb(res.status);}
+            }
+        );
+    }
+
+    /**
+     * http://docs.ceapi1.apiary.io/#facevideos
+     *
+     * @param responseId
+     * @param cb callback function
+     */
+    this.readFacevideoInfo = function(responseId, cb){
+        var ceclient = this;
+
+        var url = "facevideo/"+responseId;
+
+        javaRest.get(url, null,
+            function (res){
+                if(cb) {
+                    cb(res);
+                }
+            },
+            function (res){
+                if(cb) {
+                    cb(res);
+                }
+            }
+        );
+
+    }
+
+
+
+
+    /**
+     * http://docs.ceapi1.apiary.io/#facevideos
+     *
+     * Value 	Description
+     * 0 	    Not started
+     * 1     	Processing started
+     * 2 	    Processing complete
+     * -1    	Error
+     *
+     * @param responseId
+     * @param cb
+     */
+
+    this.readFacevideoStatus = function(responseId, cb){
+        var ceclient = this;
+        var url = "facevideo/"+responseId;
+        this.getFvStatus(url, cb);
+    }
+
     /**
      * Console log
      * @param msg
@@ -680,7 +740,7 @@ javaRest.user.updateName = function (value, callback) {
 
 
 /**
- * Upload a facevideo
+ * Upload a facevideo via link
  *
  * @param {string}
  * @param {string}
@@ -689,7 +749,6 @@ javaRest.user.updateName = function (value, callback) {
  * @param {function}
  */
 javaRest.facevideo.uploadLink = function(videoLink, callback) {
-
 
     javaRest.postAuth(
         'facevideo',
@@ -708,6 +767,29 @@ javaRest.facevideo.uploadLink = function(videoLink, callback) {
     )
 }
 
+javaRest.facevideo.info = function(response_id, callback) {
+
+    javaRest.get(
+        'facevideo/'+response_id,
+        function(response) {
+            if (callback) {
+                callback(response);
+            }
+        },
+        function(jqXHR, textStatus) {
+            console.log(jqXHR);
+            if (callback) {
+                callback(jqXHR);
+            }
+        }
+    )
+}
+
+/**
+ * Upload a facevideo via file
+ * @param file
+ * @param callback
+ */
 javaRest.facevideo.upload = function(file, callback) {
 
 

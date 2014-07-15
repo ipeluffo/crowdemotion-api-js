@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crowdemotion JS rest api</title>
+</head>
+<body>
+<script src="./jquery.min.js"></script>
+<script src="./sha256.js"></script>
+<script src="./enc-base64-min.js"></script>
+<script src="./store.js"></script>
+<script src="./CEClient.js"></script>
+<script>
+    (function() {
+
+        var ceclient = new CEClient();
+        var facevideoResponseId = 0000;
+
+        //LOGIN
+        console.log('LOGGING IN');
+        ceclient.init(true, true);
+        ceclient.login('username','password',
+                function(){
+                    execFacevideoInfo();
+                });
+
+        //READ Info and status
+        var execFacevideoInfo = function(){
+            console.log('read Facevideo info and status');
+            ceclient.readFacevideoInfo(facevideoResponseId, execFacevideoInfoPrint);
+            ceclient.readFacevideoStatus(facevideoResponseId, execLogout);
+        }
+
+        //PRINT FACEVIDEO INFO
+        var execFacevideoInfoPrint = function(res){
+            console.log('Results Facevideo Info');
+            console.log(res);
+        };
+
+        //PRINT FACEVIDEO STATUS AND LOGOUT
+        var execLogout = function(res){
+            console.log('Results Facevideo Status');
+            console.log(res);
+            console.log('LOGOUT');
+            ceclient.logout();
+        };
+
+    })();
+</script>
+
+</body>
+</html>
