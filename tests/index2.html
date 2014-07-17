@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crowdemotion JS rest api</title>
+</head>
+<body>
+<script src="../src/jquery.min.js"></script>
+<script src="../src/sha256.js"></script>
+<script src="../src/enc-base64-min.js"></script>
+<script src="../src/store.js"></script>
+<script src="../src/CEClient.js"></script>
+<script>
+    (function() {
+
+        /*
+         *  0 - Login
+         *  1 - Upload a facevideo
+         *  2 - Write a timeseries data
+         *  3 - Read timeseries data
+         *  4 - Logout
+         */
+
+        var ceclient = new CEClient();
+
+        //LOGIN
+        console.log('LOGGING IN');
+        ceclient.init(true, true);
+        ceclient.login('user','password',
+                function(){
+                    execReadMetrics();
+                });
+
+        //READ METRICS
+        var execReadMetrics = function(){
+            console.log('READ METRICS');
+            ceclient.readMetrics(null, execUploadLink );
+        };
+
+        //UPLOAD FILE USING LINK
+        var execUploadLink = function(res){
+            console.log(res);
+            console.log('UPLOAD VIDEO');
+            var rand  = Math.floor((Math.random()*10000000000)+1);
+            ceclient.uploadLink('jstest_'+rand+'.mp4', execWTS);
+        }
+
+        //WRITE TIME SERIES
+        var execWTS = function(res){
+            console.log(res);
+            console.log('WRITE TIME SERIES');
+            ceclient.writeTimeSeries(ceclient.responseId, 2, [0.5, 0.4, 0.3, 0.2] , execRTS)
+        };
+
+
+        //READ TIME SERIES
+        var execRTS = function(){
+            console.log('READ TIME SERIES');
+            ceclient.readTimeseries(ceclient.responseId, [1,2,3,4,5,6,7,8] , execLogout);
+        };
+
+        //LOGOUT
+        var execLogout = function(res){
+            console.log('Results from timeseries');
+            console.log(res);
+            console.log('LOGOUT');
+            ceclient.logout();
+        };
+
+    })();
+</script>
+
+</body>
+</html>
