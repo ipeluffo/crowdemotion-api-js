@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crowdemotion JS rest api</title>
+</head>
+<body>
+<script src="../src/jquery.min.js"></script>
+<script src="../src/sha256.js"></script>
+<script src="../src/enc-base64-min.js"></script>
+<script src="../src/store.js"></script>
+<script src="../src/CEClient.js"></script>
+<script>
+    (function() {
+
+        /*
+         *  0 - Login
+         *  1 - Upload a facevideo
+         *  2 - Wait facevideo results
+         *  3 - Read timeseries data
+         *  4 - Logout
+         */
+
+        var ceclient = new CEClient();
+        var statusReader;
+        var responseId;
+
+        //LOGIN
+        console.log('LOGGING IN');
+        ceclient.init(true, true);
+        ceclient.login('user','password',
+                function(){
+                    execUploadLink();
+                });
+
+        //UPLOAD FILE USING LINK
+        var execUploadLink = function(){
+            console.log('UPLOAD VIDEO');
+            ceclient.uploadLink('http://DOMAIN/FILENAME.mp4', execReadFacevideoStatus);
+        }
+
+        //READ METRICS
+        var execReadFacevideoStatus = function(resp){
+            statusReader = setInterval(
+                    function(){
+                        console.log('READ FACEVIDEO STATUS');
+                        responseId = resp.responseId;
+                        ceclient.readFacevideoStatus(resp.responseId, execReadMetrics);
+                    },7000
+            )
+
+        };
+
+        var execReadMetrics = function(resp){
+            console.log('Video Status processing: ');
+            if(resp==2){
+                console.log('Processing complete');
+                clearInterval(statusReader);
+                execRTS()
+            }else if(resp==1){
+                console.log('Processing started');
+            }
+            else if(resp==0){
+                console.log('Not Started');
+            }
+            else if(resp==-1){
+                console.log('Processing Error -  stop');
+                clearInterval(statusReader);
+                execLogout();
+            }else{
+                console.log('Unexpected error');
+                clearInterval(statusReader);
+                execLogout();
+            }
+
+        };
+
+        //READ TIME SERIES
+        var execRTS = function(){
+            console.log('READ TIME SERIES');
+            ceclient.readTimeseries(responseId, [1,2,3,4,5,6,7,8] , execLogout);
+        };
+
+        //LOGOUT
+        var execLogout = function(res){
+            console.log('Results from timeseries');
+            console.log(res);
+            console.log('LOGOUT');
+            ceclient.logout();
+        };
+
+    })();
+</script>
+
+</body>
+</html>
