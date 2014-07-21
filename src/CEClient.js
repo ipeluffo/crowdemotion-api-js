@@ -14,8 +14,9 @@ function CEClient() {
 
 
 
-    this.logout = function (){
+    this.logout = function (cb){
         javaRest.user.logout();
+        if(cb){ cb();}
     }
 
     this.init  = function(debug, http){
@@ -28,13 +29,15 @@ function CEClient() {
         var ceclient = this;
 
         javaRest.user.login(username,password, function (response) {
+            var ret = false;
             if (response.success) {
                 ceclient.userId = response.userId;
                 ceclient.token = response.token;
+                ret = true
             } else {
                 ceclient.errorlog = ceclient.errorlog + "\n" + response.statusText + " ["+ response.status +"]: " + response.responseText;
             }
-            if(cb){ cb();}
+            if(cb){ cb(ret);}
 
         });
 
