@@ -1,0 +1,194 @@
+(function () {
+
+    var ceclient = new CEClient();
+    var username, password;
+    var statusReader;
+    var responseId;
+    var video;
+    var oneSecIndex, timeSeriesData;
+
+    function ce_log(val){
+        if(console.log){
+            console.log(val);
+        }
+        $('#log .content').prepend("<br/>"+ val);
+    }
+
+    function writeInfo(val,  clear, type){
+        (!type)? type = 'info':'';
+        (!clear)? clear = false: clear = true;
+        if(clear) $('#info').html('');
+        $('#info').append(val+'<br/>');
+        $('#info').removeClass();
+        $('#info').addClass(type);
+    }
+
+    function loading(clear){
+        ce_log('load' + clear);
+        (!clear)? clear = false : '';
+        (clear==false)? $('#load').html('load...') : $('#load').html('');
+    }
+
+    $(document).ready(function () {
+
+        ce_log('Insert login');
+
+        ceclient.init(true, true);
+        $('#container').html('<div id="form_login"><input id="username" placeholder="username"   type="text"  class="inline" ><input id="password" placeholder="password"  type="text"   class="inline" ><input id="submit" type="button"  class="inline" value="Login" ></div>');
+        $('#container').on( 'click', '#submit', function () {
+            loading();
+            execLogin($('#username').val(), $('#password').val());
+        })
+
+        var execLogin = function (username, password) {
+            loading(true);
+            ce_log('creds inserted '+username+' *******');
+            ceclient.login(username, password,
+                function (res) {
+
+                    ce_log('login results');
+                    ce_log(res);
+                    loading(true);
+                    if(res==true){
+                        $('#form_login').slideUp('slow', function(){
+                            $('#container').html('<div id="form_graph" style="display: none"><input id="responseId" placeholder="response ID" type="text"  class="inline"  ><input id="submitRequestId" type="button"  class="inline"  value="Send Request"><div id="graph"></div></div>');
+                            $('#container').append('<div id="graph"></div>');
+                            $('#container').append('<input id="stopCheckData" type="button" value="Stop check video status">');
+                            $('#container').append('<div id="info"></div>');
+                            $('#container').append('<div id="logout"><input id="submitLogout" type="button" value="Logout"></div>');
+
+                            $('#form_graph').slideDown('slow');
+                        });
+                        $('#container').on( 'click', '#submitRequestId', function () {
+                            loading();
+                            clearInterval(statusReader);
+                            writeInfo('', true);
+                            //$('#graph').slideUp('slow').html('').slideDown('slow');
+                            execReadFacevideoStatus($('#responseId').val());
+                        })
+                        $('#container').on( 'click', '#submitLogout', function () {
+                            execLogout();
+                        })
+                        $('#container').on( 'click', '#stopCheckData', function () {
+                            clearInterval(statusReader);
+                            $('#stopCheckData').hide();
+                        })
+                    }else{
+                        alert('Login fail');
+                    }
+
+                });
+        }
+
+        //READ METRICS
+        var execReadFacevideoStatus = function (respId) {
+            statusReader = setInterval(
+                function () {
+                    ce_log('READ FACEVIDEO STATUS');
+                    responseId = respId;
+                    ceclient.readFacevideoStatus(respId, execReadMetrics);
+                }, 7000
+            )
+
+        };
+
+        var execReadMetrics = function (resp) {
+            loading(true);
+            writeInfo('Video Status processing: ', false);
+            if (resp == 2) {
+                clearInterval(statusReader);
+                $('#stopCheckData').hide();
+                writeInfo('Processing complete', false);
+                ceclient.readFacevideoInfo(responseId, execRTS());
+            } else if (resp == 1) {
+                writeInfo('Processing started', false,  'alert');
+                $('#stopCheckData').show();
+            }
+            else if (resp == 0) {
+                writeInfo('Not Started', false, 'alert');
+                $('#stopCheckData').show();
+            }
+            else if (resp == -1) {
+                writeInfo('Processing Error -  stop', false, 'error');
+                $('#stopCheckData').show();
+                clearInterval(statusReader);
+            } else {
+                writeInfo('Error -  video not exist or user not authorized', false, 'error');
+                $('#stopCheckData').show();
+                clearInterval(statusReader);
+            }
+
+        };
+
+        //READ TIME SERIES
+        var execRTS = function (videoInfo) {
+
+            clearInterval(statusReader);
+            video = videoInfo;
+            ce_log('READ TIME SERIES');
+            writeInfo('Download timeseries data', false)
+            loading();
+            ceclient.readTimeseries(responseId, [1, 3, 4, 5, 6, 7, 8], execGraph, true);
+        };
+
+        var execGraph = function(dataApi){
+            loading(true);
+            ce_log(dataApi);
+            timeSeriesData = [dataApi[0].data,dataApi[1].data,dataApi[2].data,dataApi[3].data,dataApi[4].data,dataApi[5].data,dataApi[6].data];
+            dataTStoGraph(timeSeriesData)
+
+        }
+
+        //LOGOUT
+        var execLogout = function (res) {
+            clearInterval(statusReader);
+            ce_log('LOGOUT');
+            ceclient.logout(function (){location.reload(true);});
+        };
+
+        var execStopLoadingData = function(){
+            clearInterval(statusReader);
+        }
+
+        var dataTStoGraph = function(data){
+
+            ce_log('full data')
+            ce_log(data);
+            // Extract from timeserie number 1 (time) the index of data correspondents to 1 seconds
+            var sec_milest = 0;
+            oneSecIndex = [];
+            $(data[0]).each(function($k ,$v){
+                // every second
+                $v = parseInt($v);
+                var step = 1000;
+                if($v % step == 0 || (parseInt(($v/step)) != sec_milest)) {
+                    sec_milest = parseInt(($v / step));
+                    oneSecIndex.push($k);
+                }
+            });
+
+            ce_log('oneSecIndex Array index')
+            console.log(oneSecIndex.length);
+            // Extract from timeseries 2-7 the data according to 1sec index
+            var dataGraph = [];
+            for(var i = 1; i < data.length; i++){
+                var tm = data[i];
+                var mi = i+1; //metricId
+
+                var tosave = [];
+                for(var tmi = 0; tmi < oneSecIndex.length; tmi++){
+                    tosave.push( tm[ oneSecIndex[tmi] ]);
+                }
+                dataGraph.push(tosave);
+            }
+            showGraph(dataGraph);
+
+        }
+
+        $('#log legend').click(function(){
+            $('#log .content').slideDown('slow');
+            $('#log legend').html('Logs');
+        })
+
+    });
+})();
