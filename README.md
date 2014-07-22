@@ -19,6 +19,9 @@ $ python -m SimpleHTTPServer
 
 and then opening [http://localhost:8000/tests/test_upload.html](http://localhost:8000/tests/test_upload.html).
 
+### Using the dashboard
+
+Also you can use the file dashboard.html to view results [http://crowdemotion.github.io/crowdemotion-api-js/tests/dashboard.html](http://crowdemotion.github.io/crowdemotion-api-js/tests/dashboard.html)
 
 ## Contributing
 
