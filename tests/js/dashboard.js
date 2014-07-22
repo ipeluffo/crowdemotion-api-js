@@ -160,7 +160,7 @@
             $(data[0]).each(function($k ,$v){
                 // every second
                 $v = parseInt($v);
-                var step = 1000;
+                var step = 100;
                 if($v % step == 0 || (parseInt(($v/step)) != sec_milest)) {
                     sec_milest = parseInt(($v / step));
                     oneSecIndex.push($k);
