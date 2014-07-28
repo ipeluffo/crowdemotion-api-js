@@ -19,15 +19,6 @@
 
                 var ceclient = new CEClient();
 
-                //LOGIN
-                console.log('LOGGING IN');
-                ceclient.init(true, true);
-                ceclient.login('username','password',
-                function(){
-                //UPLOAD VIDEO
-
-                console.log(ceclient.errorlog);
-                });
 
             //LOGOUT
             var execLogout = function(res){
@@ -40,14 +31,23 @@
 
             $('#sendbutton').click(function(){
                 //ceclient.sendFile("fileinput");
-
-                ceclient.uploadForm('form_upload');
+//LOGIN
+                console.log('LOGGING IN');
+                ceclient.init(true, true);
+                ceclient.login($('#username').val(),$('#password').val(),
+                        function(){
+                            //UPLOAD VIDEO
+                            console.log(ceclient.errorlog);
+                        });
+                        ceclient.uploadForm('form_upload');
                 });
             });
 
             </script>
 
             <form id="form_upload" method="post" enctype="multipart/form-data">
+                <input id="username" placeholder="username">
+                <input id="password"  placeholder="password">
                 <input type="file" name="file" id="file" />
                 <input type="button" id="sendbutton" value="send">
                 </form>
