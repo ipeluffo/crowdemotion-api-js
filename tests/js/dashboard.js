@@ -5,7 +5,8 @@
     var statusReader;
     var responseId;
     var video;
-    var oneSecIndex, timeSeriesData;
+    var oneSecIndex = [];
+    var timeSeriesData;
 
     function ce_log(val){
         if(console.log){
@@ -152,8 +153,6 @@
 
         var dataTStoGraph = function(data){
 
-            ce_log('full data')
-            ce_log(data);
             // Extract from timeserie number 1 (time) the index of data correspondents to 1 seconds
             var sec_milest = 0;
             oneSecIndex = [];
@@ -171,6 +170,7 @@
             console.log(oneSecIndex.length);
             // Extract from timeseries 2-7 the data according to 1sec index
             var dataGraph = [];
+            dataGraph.push(data[0]);
             for(var i = 1; i < data.length; i++){
                 var tm = data[i];
                 var mi = i+1; //metricId

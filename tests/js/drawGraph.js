@@ -1,5 +1,6 @@
 var line1_rest;
-var emo_labels = ["happy", "surprised", "puzzled", "disgusted", "afraid", "sad"];
+var emo_labels = ["", "happy", "surprised", "puzzled", "disgusted", "afraid", "sad"];
+var xlabels = [];
 
 (function (H) {
     var addEvent = H.addEvent;
@@ -47,7 +48,7 @@ var emo_labels = ["happy", "surprised", "puzzled", "disgusted", "afraid", "sad"]
                     if (currentX + draggedX > 0 &&
                         currentX + draggedX + legend.legendWidth < chart.chartWidth &&
                         currentY + draggedY > 0 &&
-                        currentY + draggedY + legend.legendHeight < chart.chartHeight           ) {
+                        currentY + draggedY + legend.legendHeight < chart.chartHeight) {
                         legend.group.placed = false; // prevent animation
                         legend.group.align(H.extend({
                             width: legend.legendWidth,
@@ -65,116 +66,119 @@ var emo_labels = ["happy", "surprised", "puzzled", "disgusted", "afraid", "sad"]
 }(Highcharts));
 // End plugin
 
-function draw_graphs_rest(data)
-{
+function draw_graphs_rest(data) {
     var elName = 'engChart';
     elName = 'graph';
-    if(data==undefined){ data = []; }
+    if (data == undefined) {
+        data = [];
+    }
+
+    if (line1_rest != null) {
+        line1_rest.destroy();
+        line1_rest = null;
+    }
+
+    console.log('==================line1_rest');
+    console.log(data);
 
     var xlabels = [];
-
-    if(!line1_rest || (line1_rest.series.length<= 0)) {
-        //add_export(elName);
-
-        var series_rest = [];
-
-        for(var i=0; i < data.length; i++) {
-            series_rest.push({
-                name: emo_labels[i],
-                data: data[i],
-                lineWidth: 1,
-                marker: {
-                    enabled: true,
-                    symbol: null,
-                    radius: 3
-                }
-            });
+    var lastval = null;
+    for (var ii = 0; ii < data[0].length; ii++) {
+        var val = data[0][ii];
+        if ((ii % 10) == 0 && val != null && val != NaN && val != undefined && lastval != Math.ceil(val / 1000)) {
+            //xlabels.push((Math.ceil(val / 1000)));
+            var val2 = Math.ceil(val / 1000);
+            xlabels.push(val2);
+            lastval = val2;
+        } else {
+            xlabels.push("");
         }
 
-        console.log('==================line1_rest');
-        console.log(data[i]);
+    }
+
+    var series_rest = [];
+    for (var i = 1; i < data.length; i++) {
+        series_rest.push({
+            name: emo_labels[i],
+            data: data[i],
+            lineWidth: 1,
+            marker: {
+                enabled: true,
+                symbol: null,
+                radius: 3
+            }
+        });
+    }
 
 
-        line1_rest = new Highcharts.Chart({
-            credits: { enabled: false },
-            chart: {
-                renderTo: elName,
-                type: 'line',
-                animation: true,
-                marginRight: 50,
-                marginBottom: 90,
-                zoomType: 'x'
-            },
+    line1_rest = new Highcharts.Chart({
+        credits: { enabled: false },
+        chart: {
+            renderTo: elName,
+            type: 'line',
+            animation: true,
+            marginRight: 50,
+            marginBottom: 90,
+            zoomType: 'x'
+        },
+        title: {
+            text: 'emotions - api (kanako)',
+            x: -20 //center
+        },
+        xAxis: {
+            type: 'category',
+            min: xlabels[0],
+            categories: xlabels,
+            labels: {
+                rotation: -35,
+                align: 'right'
+            }
+        },
+        yAxis: {
+            min: null,
+            max: null,
+            maxPadding: 0,
+            minPadding: 0,
             title: {
-                text: 'emotions - api (kanako)',
-                x: -20 //center
+                text: ''
             },
-            xAxis: {
-                min: 0,
-                categories: null,
-                labels: {
-                    rotation: -35,
-                    align: 'right'
-                }
-            },
-            yAxis: {
-                min: null,
-                max: null,
-                maxPadding: 0,
-                minPadding: 0,
-                title: {
-                    text: ''
-                },
-                plotLines: [{
+            plotLines: [
+                {
                     value: 0,
                     width: 1,
                     color: '#808080'
-                }]
+                }
+            ]
+        },
+        tooltip: {
+            formatter: tooltipFormatter
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'top',
+            x: -10,
+            y: 60,
+            backgroundColor: 'white',
+            borderWidth: 1,
+            borderRadius: 0,
+            title: {
+                text: ':: Drag Legend'
             },
-            tooltip: {
-                formatter: tooltipFormatter
-            },
-            legend: {
-                layout: 'vertical',
-                align: 'right',
-                verticalAlign: 'top',
-                x: -10,
-                y: 60,
-                backgroundColor: 'white',
-                borderWidth: 1,
-                borderRadius: 0,
-                title: {
-                    text: ':: Drag Legend'
-                },
-                floating: true,
-                draggable: true,
-                zIndex: 20
-            },
-            series: series_rest
-        });
-    } else {
+            floating: true,
+            draggable: true,
+            zIndex: 2000
+        },
+        series: series_rest
+    });
 
-        if(data.length > 0) {
-            for(var i=0; i < line1_rest.series.length; i++) {
-                line1_rest.series[i].setData(data[i], false);
-            }
-        } else {
-            for(var i=0; i < line1_rest.series.length; i++) {
-                line1_rest.series[i].setData([], false);
-            }
-        }
-
-        line1_rest.xAxis[0].setCategories(xlabels, false);
-        line1_rest.redraw();
-    }
 
 }
 
-function showGraph(data)
-{
-    try{
+function showGraph(data) {
+    try {
         draw_graphs_rest(data);
-    }catch(err){
+    } catch (err) {
         console.log('error');
         console.log(err);
     }
@@ -182,5 +186,5 @@ function showGraph(data)
 }
 
 function tooltipFormatter() {
-    return '<b>'+ this.series.name +'</b><br/>'+ ((this.x!=null)?(Math.round(this.y*10)/10):'value') +': '+ Math.round(this.y*100)/100;
+    return '<b>' + this.series.name + '</b><br/>' + ((this.x != null) ? (Math.round(this.y * 10) / 10) : 'value') + ': ' + Math.round(this.y * 100) / 100;
 }
