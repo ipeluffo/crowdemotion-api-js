@@ -38,7 +38,12 @@ input[type="text"].inline, input[type="button"].inline, input[type="password"].i
     font-color: #ff9911;
     font-weight: bold;
 }
-
+#infoVideo{
+    position: absolute;
+    top: 500px;
+    right: 0;
+    font-size: 10px;
+}
 /*
 * Skeleton V1.2
 * Copyright 2011, Dave Gamache

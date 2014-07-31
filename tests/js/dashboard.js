@@ -7,6 +7,7 @@
     var video;
     var oneSecIndex = [];
     var timeSeriesData;
+    var videoInfo;
 
     function ce_log(val){
         if(console.log){
@@ -54,6 +55,7 @@
                         $('#form_login').slideUp('slow', function(){
                             $('#container').html('<div id="form_graph" style="display: none"><input id="responseId" placeholder="response ID" type="text"  class="inline"  ><input id="submitRequestId" type="button"  class="inline"  value="Send Request"><div id="graph"></div></div>');
                             $('#container').append('<div id="graph"></div>');
+                            $('#container').append('<div id="infoVideo"></div>');
                             $('#container').append('<input id="stopCheckData" type="button" value="Stop check video status">');
                             $('#container').append('<div id="info"></div>');
                             $('#container').append('<div id="logout"><input id="submitLogout" type="button" value="Logout"></div>');
@@ -87,29 +89,44 @@
                 function () {
                     ce_log('READ FACEVIDEO STATUS');
                     responseId = respId;
-                    ceclient.readFacevideoStatus(respId, execReadMetrics);
+                    ceclient.readFacevideoInfo(respId, execReadMetrics);
                 }, 7000
             )
 
         };
 
+        var publishInfo =  function (info){
+            $('#infoVideo').show();
+            $('#infoVideo').html('');
+            $('#infoVideo').html(
+                'fileName: "'+info.fileName+'" <br>' +
+                'id: "'+info.id+'" <br>' +
+                'lengthS: "'+info.lengthS+'" <br>' +
+                'numFrames: "'+info.numFrames+'" <br>' +
+                'responseId: "'+info.responseId+'" <br>'
+            );
+        }
+
         var execReadMetrics = function (resp) {
+            var status = resp.status;
+            videoInfo = resp;
             loading(true);
+            publishInfo(resp);
             writeInfo('Video Status processing: ', false);
-            if (resp == 2) {
+            if (status == 2) {
                 clearInterval(statusReader);
                 $('#stopCheckData').hide();
                 writeInfo('Processing complete', false);
                 ceclient.readFacevideoInfo(responseId, execRTS());
-            } else if (resp == 1) {
+            } else if (status == 1) {
                 writeInfo('Processing started', false,  'alert');
                 $('#stopCheckData').show();
             }
-            else if (resp == 0) {
+            else if (status == 0) {
                 writeInfo('Not Started', false, 'alert');
                 $('#stopCheckData').show();
             }
-            else if (resp == -1) {
+            else if (status == -1) {
                 writeInfo('Processing Error -  stop', false, 'error');
                 $('#stopCheckData').show();
                 clearInterval(statusReader);
