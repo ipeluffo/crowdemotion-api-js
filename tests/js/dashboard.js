@@ -8,6 +8,7 @@
     var oneSecIndex = [];
     var timeSeriesData;
     var videoInfo;
+    var graphType = "dt"; //hc OR dt
 
     function ce_log(val){
         if(console.log){
@@ -153,7 +154,12 @@
             loading(true);
             ce_log(dataApi);
             timeSeriesData = [dataApi[0].data,dataApi[1].data,dataApi[2].data,dataApi[3].data,dataApi[4].data,dataApi[5].data,dataApi[6].data];
-            dataTStoGraph(timeSeriesData)
+            if(graphType=='hc'){
+                dataTStoGraphHC(timeSeriesData)
+            }else if(graphType=='dt'){
+                dataTStoGraphDT(timeSeriesData)
+            }
+
 
         }
 
@@ -168,7 +174,7 @@
             clearInterval(statusReader);
         }
 
-        var dataTStoGraph = function(data){
+        var dataTStoGraphHC = function(data){
 
             // Extract from timeserie number 1 (time) the index of data correspondents to 1 seconds
             var sec_milest = 0;
@@ -198,9 +204,17 @@
                 }
                 dataGraph.push(tosave);
             }
-            showGraph(dataGraph);
+            showGraphHC(dataGraph);
 
         }
+
+        var dataTStoGraphDT = function(data){
+
+            showGraphDT(data);
+
+        }
+
+
 
         $('#log legend').click(function(){
             $('#log .content').slideDown('slow');

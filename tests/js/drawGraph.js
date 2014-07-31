@@ -175,7 +175,7 @@ function draw_graphs_rest(data) {
 
 }
 
-function showGraph(data) {
+function showGraphHC(data) {
     try {
         draw_graphs_rest(data);
     } catch (err) {

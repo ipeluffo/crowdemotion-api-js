@@ -44,6 +44,49 @@ input[type="text"].inline, input[type="button"].inline, input[type="password"].i
     right: 0;
     font-size: 10px;
 }
+/* tell the SVG path to be a thin blue line without any area fill */
+path {
+    stroke-width: 1;
+    fill: none;
+}
+path {
+    stroke: steelblue;
+}
+.path2 {
+    stroke: #65b42c;
+}
+.path3 {
+    stroke: #b43983;
+}
+.path4 {
+    stroke: #752ab4;
+}
+.path5 {
+    stroke: #b4ae25;
+}
+.path6 {
+    stroke: #b43e31;
+}
+.axis {
+    shape-rendering: crispEdges;
+}
+
+.x.axis line {
+    stroke: lightgrey;
+}
+
+.x.axis .minor {
+    stroke-opacity: .5;
+}
+
+.x.axis path {
+    display: none;
+}
+
+.y.axis line, .y.axis path {
+    fill: none;
+    stroke: #000;
+}
 /*
 * Skeleton V1.2
 * Copyright 2011, Dave Gamache
