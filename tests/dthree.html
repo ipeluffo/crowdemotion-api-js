@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.video_tag {
+	font: 20px sans-serif;
+	color: indianred;
+    text-decoration: bold;
+}
+
+.video_tag_circle {
+    fill: orange;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  stroke: black;
+  fill: none;
+  stroke-width: 0.75px;
+}
+
+.line.line0 {
+  stroke: steelblue;
+}
+
+.line.line1 {
+  stroke: indianred;
+}
+
+.line.line2 {
+  stroke: green;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+  fill: none;
+}
+
+.focus circle.y0 {
+  stroke: blue;
+}
+
+.focus circle.y1 {
+  stroke: red;
+}
+
+.focus circle.y2{
+  stroke: green;
+}
+
+.focus line {
+  stroke: purple;
+  shape-rendering: crispEdges;
+}
+
+.focus line.y0 {
+  stroke: steelblue;
+  stroke-dasharray: 3 3;
+  opacity: .5;
+}
+
+.focus line.y1 {
+  stroke: indianred;
+  stroke-dasharray: 3 3;
+  opacity: .5;
+}
+
+.focus line.y2 {
+  stroke: green;
+  stroke-dasharray: 3 3;
+  opacity: .5;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+</style>
+
+<!-- // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<body>
+	<!--  This is the piece of code for the selection buttons, this has Surprise checked by default -->
+	<label><input id="surprise" type="checkbox" checked /> Surprise </label>
+	<label><input id="anger" type="checkbox" /> Anger </label>
+	<label><input id="fear" type="checkbox" /> Fear </label>
+
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+
+<script>
+
+// ------------------------------------------------------------------ Define the main program
+// The following is the main function which is called throughout
+
+var myFunction = function(){
+
+var main_margin = {top: 20, right: 80, bottom: 100, left: 40},
+    mini_margin = {top: 430, right: 80, bottom: 20, left: 40},
+    main_width = 960 - main_margin.left - main_margin.right,
+    main_height = 500 - main_margin.top - main_margin.bottom,
+    mini_height = 500 - mini_margin.top - mini_margin.bottom;
+
+var formatDate = d3.time.format("%H:%M"),
+    parseDate = formatDate.parse,
+    bisectDate = d3.bisector(function(d) { return d.date; }).left,
+    formatOutput0 = function(d) { return formatDate(d.date) + " - " + d.Track1; };
+    formatOutput1 = function(d) { return formatDate(d.date) + " - " + d.Track2; };
+    formatOutput2 = function(d) { return formatDate(d.date) + " - " + d.Track3; };
+    formatOutput3 = function(d) { return d.Track4.toUpperCase(); };
+
+var main_x = d3.time.scale()
+    .range([0, main_width]),
+    mini_x = d3.time.scale()
+    .range([0, main_width]);
+
+var main_y0 = d3.scale.linear()
+    .range([main_height, 0]),
+    mini_y0 = d3.scale.linear()
+    .range([mini_height, 0]),
+    mini_y1 = d3.scale.linear()
+    .range([mini_height, 0]);
+
+var main_xAxis = d3.svg.axis()
+    .scale(main_x)
+    .tickFormat(d3.time.format("%H:%M"))
+    .orient("bottom"),
+    mini_xAxis = d3.svg.axis()
+    .scale(mini_x)
+    .tickFormat(d3.time.format("%H:%M"))
+    .orient("bottom");
+
+var main_yAxisLeft = d3.svg.axis()
+    .scale(main_y0)
+    .orient("left");
+    main_yAxisRight = d3.svg.axis()
+    .scale(main_y0)
+    .orient("right");
+
+var brush = d3.svg.brush()
+    .x(mini_x)
+    .on("brush", brush);
+
+var main_line0 = d3.svg.line()
+    .interpolate("cardinal")
+    .x(function(d) { return main_x(d.date); })
+    .y(function(d) { return main_y0(d.Track1); });
+    
+var main_line1 = d3.svg.line()
+    .interpolate("cardinal")
+    .x(function(d) { return main_x(d.date); })
+    .y(function(d) { return main_y0(d.Track2); });
+
+var main_line2 = d3.svg.line()
+    .interpolate("cardinal")
+    .x(function(d) { return main_x(d.date); })
+    .y(function(d) { return main_y0(d.Track3); });
+
+var mini_line0 = d3.svg.line()
+    .x(function(d) { return mini_x(d.date); })
+    .y(function(d) { return mini_y0(d.Track1); });
+    
+var mini_line1 = d3.svg.line()
+    .x(function(d) { return mini_x(d.date); })
+    .y(function(d) { return mini_y0(d.Track2); });
+    
+var mini_line2 = d3.svg.line()
+    .x(function(d) { return mini_x(d.date); })
+    .y(function(d) { return mini_y0(d.Track3); });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", main_width + main_margin.left + main_margin.right)
+    .attr("height", main_height + main_margin.top + main_margin.bottom);
+
+svg.append("defs").append("clipPath")
+    .attr("id", "clip")
+    .append("rect")
+    .attr("width", main_width)
+    .attr("height", main_height);
+
+var main = svg.append("g")
+    	.attr("transform", "translate(" + main_margin.left + "," + main_margin.top + ")");
+    	
+var mini = svg.append("g")
+    .attr("transform", "translate(" + mini_margin.left + "," + mini_margin.top + ")");
+
+var video_tags = [];
+
+// var minDate = d3.min(main, function(d) { return d.date; });
+
+var video_tags_func = function(track) {
+	for(var i = 0; i < video_tags.length; i++){
+// 	if(video_tags[i][0] < main_margin.left && video_tags[i][0] > main_margin.right){
+		main.append("circle")
+	  	  .attr("cx", function() {return main_x(video_tags[i][0])})
+      	  .attr("cy", function() {return main_y0(video_tags[i][track])})
+      	  .attr("r", 4)
+      	  .attr("class", "video_tag_circle");
+//     }
+    }
+}
+
+// ------------------------------------------------------------------
+
+d3.csv("output.txt", function(error, data) {
+
+  data.forEach(function(d) {
+    d.date = parseDate(d.date);
+    d.Track1 = +d.Track1;
+    d.Track2 = +d.Track2;
+    d.Track3 = +d.Track3;
+    if(d.Track4 != ""){
+      video_tags.push([d.date, d.Track1, d.Track2, d.Track3, d.Track4]);
+    }
+  });
+
+  data.sort(function(a, b) {
+    return a.date - b.date;
+  });
+
+// ------------------------------------------------------------------
+
+  main_x.domain([data[0].date, data[data.length - 1].date]);
+  main_y0.domain(d3.extent(data, function(d) { return d.Track1; }));
+  //nice() ensures the bounds are rounded so as to not cut-off the edges of the graph
+  main_y0.nice();
+  mini_x.domain(main_x.domain());
+  mini_y0.domain(main_y0.domain());
+
+	// If else statements for adding lines and then deleting these from the DOM
+  if($('#surprise').is(":checked")) {
+  	main.append("path")
+      	.datum(data)
+      	.attr("clip-path", "url(#clip)")
+      	.attr("class", "line line0")
+      	.attr("d", main_line0);
+
+  video_tags_func(1);
+  
+  }
+  else{
+	d3.selectAll("d").selectAll(".line0")
+      .remove();
+  };
+
+  if($('#anger').is(":checked")) {
+    main.append("path")
+        .datum(data)
+        .attr("clip-path", "url(#clip)")
+        .attr("class", "line line1")
+        .attr("d", main_line1);
+    
+ 	video_tags_func(2);
+ 	
+  }
+  else{
+    d3.selectAll("d").selectAll(".line1")
+        .remove();
+  };
+    
+  if($('#fear').is(":checked")) {
+    main.append("path")
+        .datum(data)
+        .attr("clip-path", "url(#clip)")
+        .attr("class", "line line2")
+        .attr("d", main_line2);
+        
+    video_tags_func(3);
+    
+  }
+  else{
+    d3.selectAll("d").selectAll(".line2")
+          .remove();
+  };
+  
+  main.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + main_height + ")")
+      .call(main_xAxis);
+
+  main.append("g")
+      .attr("class", "y axis axisLeft")
+      .call(main_yAxisLeft)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Emotion");
+
+  mini.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + mini_height + ")")
+      .call(main_xAxis);
+
+  if($('#surprise').is(":checked")) {
+    mini.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", mini_line0);
+  }
+  else{
+    d3.selectAll("d").selectAll(".line0")
+          .remove();
+  };
+
+  if($('#anger').is(":checked")) {
+    mini.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", mini_line1);
+  }
+  else{
+    d3.selectAll("d").selectAll(".line1")
+          .remove();
+  };
+      
+  if($('#fear').is(":checked")) {
+    mini.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", mini_line2);
+  }
+  else{
+    d3.selectAll("d").selectAll(".line2")
+          .remove();
+  };
+
+  mini.append("g")
+      .attr("class", "x brush")
+      .call(brush)
+      .selectAll("rect")
+      .attr("y", -6)
+      .attr("height", mini_height + 7);
+            
+// ------------------------------------------------------------------
+
+  var focus = main.append("g")
+      .attr("class", "focus")
+      .style("display", "none");
+
+//   focus.append("line")
+//       .attr("class", "x")
+//       .attr("y1", main_y0(0) - 6)
+//       .attr("y2", main_y0(0) + 6)
+
+  if($('#surprise').is(":checked")) {
+    focus.append("line")
+        .attr("class", "y0")
+        .attr("x1", main_width - 6) // nach links
+        .attr("x2", main_width + 6); // nach rechts
+  }
+  else{
+    d3.selectAll("d").selectAll(".y0")
+          .remove();
+  };
+
+  if($('#surprise').is(":checked")) {
+    focus.append("circle")
+        .attr("class", "y0")
+        .attr("r", 4);
+  }
+  else{
+    d3.selectAll("d").selectAll(".y0")
+          .remove();
+  };
+
+  if($('#surprise').is(":checked")) {
+    focus.append("text")
+        .attr("class", "y0")
+        .attr("dy", "-1em");
+  }
+  else{
+    d3.selectAll("d").selectAll(".y0")
+          .remove();
+  };
+      
+  if($('#anger').is(":checked")) {
+    focus.append("line")
+        .attr("class", "y1")
+        .attr("x1", main_width - 6)
+        .attr("x2", main_width + 6);
+  }
+  else{
+    d3.selectAll("d").selectAll(".y1")
+          .remove();
+  };
+      
+  if($('#anger').is(":checked")) {
+    focus.append("circle")
+        .attr("class", "y1")
+        .attr("r", 4);
+  }
+  else{
+    d3.selectAll("d").selectAll(".y1")
+          .remove();
+  };
+
+  if($('#anger').is(":checked")) {
+    focus.append("text")
+        .attr("class", "y1")
+        .attr("dy", "-1em");
+  }
+  else{
+    d3.selectAll("d").selectAll(".y1")
+          .remove();
+  };
+      
+  if($('#fear').is(":checked")) {
+    focus.append("line")
+        .attr("class", "y2")
+        .attr("x1", main_width - 6)
+        .attr("x2", main_width + 6);
+  }
+  else{
+    d3.selectAll("d").selectAll(".y2")
+          .remove();
+  };
+      
+  if($('#fear').is(":checked")) {
+    focus.append("circle")
+        .attr("class", "y2")
+        .attr("r", 4);
+  }
+  else{
+    d3.selectAll("d").selectAll(".y2")
+          .remove();
+  };
+
+  if($('#fear').is(":checked")) {
+    focus.append("text")
+        .attr("class", "y2")
+        .attr("dy", "-1em");
+  }
+  else{
+    d3.selectAll("d").selectAll(".y2")
+          .remove();
+  };
+  
+  if($('#surprise').is(":checked") || $('#anger').is(":checked") || $('#fear').is(":checked")) {
+    focus.append("text")
+        .attr("class", "video_tag")
+        .attr("dy", "-1em");
+  }
+  else{
+    d3.selectAll("d").selectAll(".video_tag")
+          .remove();
+  };
+
+  main.append("rect")
+      .attr("class", "overlay")
+      .attr("width", main_width)
+      .attr("height", main_height)
+      .on("mouseover", function() { focus.style("display", null); })
+      .on("mouseout", function() { focus.style("display", "none"); })
+      .on("mousemove", mousemove);
+
+  function mousemove() {
+    var x0 = main_x.invert(d3.mouse(this)[0]),
+        i = bisectDate(data, x0, 1),
+        d0 = data[i - 1],
+        d1 = data[i],
+        d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+    focus.select("circle.y0").attr("transform", "translate(" + main_x(d.date) + "," + main_y0(d.Track1) + ")");
+    focus.select("text.y0").attr("transform", "translate(" + main_x(d.date) + "," + main_y0(d.Track1) + ")").text(formatOutput0(d));
+    focus.select("circle.y1").attr("transform", "translate(" + main_x(d.date) + "," + main_y0(d.Track2) + ")");
+    focus.select("text.y1").attr("transform", "translate(" + main_x(d.date) + "," + main_y0(d.Track2) + ")").text(formatOutput1(d));
+    focus.select("circle.y2").attr("transform", "translate(" + main_x(d.date) + "," + main_y0(d.Track3) + ")");
+    focus.select("text.y2").attr("transform", "translate(" + main_x(d.date) + "," + main_y0(d.Track3) + ")").text(formatOutput2(d));
+//     focus.select(".x").attr("transform", "translate(" + main_x(d.date) + ",0)");
+    focus.select(".y0").attr("transform", "translate(" + main_width * -1 + ", " + main_y0(d.Track1) + ")").attr("x2", main_width + main_x(d.date));
+    focus.select(".y1").attr("transform", "translate(" + main_width * -1 + ", " + main_y0(d.Track2) + ")").attr("x2", main_width + main_x(d.date));
+    focus.select(".y2").attr("transform", "translate(" + main_width * -1 + ", " + main_y0(d.Track3) + ")").attr("x2", main_width + main_x(d.date));
+    
+    //The following line adds and translates the text on the screen
+    focus.select("text.video_tag").attr("transform", "translate(" + 50 + "," + 300 + ")").text(formatOutput3(d));
+  }
+});
+
+function brush() {
+  main_x.domain(brush.empty() ? mini_x.domain() : brush.extent());
+  main.select(".line0").attr("d", main_line0);
+  main.select(".line1").attr("d", main_line1);
+  main.select(".line2").attr("d", main_line2);
+  main.selectAll(".video_tag_circle").remove();
+  if($('#surprise').is(":checked")) {
+  	video_tags_func(1);
+  }
+  if($('#anger').is(":checked")) {
+  	video_tags_func(2);
+  }
+  if($('#fear').is(":checked")) {
+  	video_tags_func(3);
+  }
+  main.select(".x.axis").call(main_xAxis);
+}
+
+};
+
+// ------------------------------------------------------------------ Run the program
+
+myFunction();
+
+$('input').on('change', function() {
+
+d3.select("svg").remove();
+myFunction()
+
+});
+</script>
+</body>
