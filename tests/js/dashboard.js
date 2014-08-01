@@ -8,7 +8,7 @@
     var oneSecIndex = [];
     var timeSeriesData;
     var videoInfo;
-    var graphType = "dt"; //hc OR dt
+    var graphType = "dt"; //hc OR dt OR dimple
 
     function ce_log(val){
         if(console.log){
@@ -37,7 +37,10 @@
         ce_log('Insert login');
 
         ceclient.init(true, true);
-        $('#container').html('<div id="form_login"><input id="username" placeholder="username"   type="text"  class="inline" ><input id="password" placeholder="password"  type="text"   class="inline" ><input id="submit" type="button"  class="inline" value="Login" ></div>');
+        $('#container').html('<div id="form_login">'+
+            '<input id="username" placeholder="username"   type="text"  class="inline" >'+
+            '<input id="password" placeholder="password"  type="text"   class="inline" >'+
+            '<input id="submit" type="button"  class="inline" value="Login" ></div>');
         $('#container').on( 'click', '#submit', function () {
             loading();
             execLogin($('#username').val(), $('#password').val());
@@ -54,7 +57,10 @@
                     loading(true);
                     if(res==true){
                         $('#form_login').slideUp('slow', function(){
-                            $('#container').html('<div id="form_graph" style="display: none"><input id="responseId" placeholder="response ID" type="text"  class="inline"  ><input id="submitRequestId" type="button"  class="inline"  value="Send Request"><div id="graph"></div></div>');
+                            $('#container').html('<div id="form_graph" style="display: none">'+
+                                '<input id="responseId" placeholder="response ID" type="text"  class="inline"  >'+
+                                '<input id="submitRequestId" type="button"  class="inline"  value="Send Request" >'+
+                                '<div id="graph"></div></div>');
                             $('#container').append('<div id="graph"></div>');
                             $('#container').append('<div id="infoVideo"></div>');
                             $('#container').append('<input id="stopCheckData" type="button" value="Stop check video status">');
@@ -156,8 +162,8 @@
             timeSeriesData = [dataApi[0].data,dataApi[1].data,dataApi[2].data,dataApi[3].data,dataApi[4].data,dataApi[5].data,dataApi[6].data];
             if(graphType=='hc'){
                 dataTStoGraphHC(timeSeriesData)
-            }else if(graphType=='dt'){
-                dataTStoGraphDT(timeSeriesData)
+            }else if(graphType=='dt' || graphType=='dimple'){
+                dataTStoGraphDT(timeSeriesData, graphType);
             }
 
 
@@ -208,9 +214,9 @@
 
         }
 
-        var dataTStoGraphDT = function(data){
+        var dataTStoGraphDT = function(data, graphType){
 
-            showGraphDT(data);
+            showGraphDT(data, graphType);
 
         }
 
