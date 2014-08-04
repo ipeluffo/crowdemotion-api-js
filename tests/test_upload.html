@@ -34,7 +34,9 @@
 //LOGIN
                 console.log('LOGGING IN');
                 ceclient.init(true, true);
-                ceclient.login($('#username').val(),$('#password').val(),
+                var u = $('#username').val();
+                var p =  $('#password').val();
+                ceclient.login(u,p,
                         function(){
                             //UPLOAD VIDEO
                             console.log(ceclient.errorlog);
