@@ -17,11 +17,11 @@ function CEClient() {
     this.logout = function (cb){
         javaRest.user.logout();
         if(cb){ cb();}
-    }
+    };
 
-    this.init  = function(debug, http){
-        javaRest(debug, http);
-    }
+    this.init  = function(debug, http, domain){
+        javaRest(debug, http, domain);
+    };
     /**
      * user login
      */
@@ -41,7 +41,7 @@ function CEClient() {
 
         });
 
-    }
+    };
 
     /**
      * Upload a video using a full http url
@@ -55,15 +55,28 @@ function CEClient() {
             ceclient.responseId = res.responseId;
             if(cb) cb(res);
         });
+    };
+
+    /**
+     *
+     * @param responseId    int
+     * @param data          object|json
+     */
+    this.writeCustomData = function(responseId, data, cb){
 
 
-    }
+        javaRest.response.writeCustomData(responseId, data, function (res){
+            if(cb) cb(res);
+        });
+
+
+    };
 
     this.uploadForm = function (form_id) {
 
         javaRest.facevideo.uploadForm(form_id);
 
-    }
+    };
 
     this.sendFile =function (element_id, cb){
         var ceclient = this;
@@ -78,7 +91,7 @@ function CEClient() {
                 if(cb) cb(res);
             });
         })(file);
-    }
+    };
 
 
 
@@ -95,7 +108,14 @@ function CEClient() {
                 if(cb) cb(res);
             }
         );
-    }
+    };
+    /**
+     *
+     * Add custom data to the response
+     * @param responseId    numeric id
+     * @param data  json|object  string is written as data1=XXX,data2=YYY
+     *
+     */
 
 
     this.readTimeseries = function (responseId, metricId, cb, normalize) {
@@ -114,7 +134,7 @@ function CEClient() {
                 if(cb) {cb(res);}
             }
         );
-    }
+    };
 
     this.readMetrics = function (metricId, cb) {
         var url = "metric";
@@ -138,7 +158,7 @@ function CEClient() {
                 if(cb) {cb(res);}
             }
         );
-    }
+    };
 
     this.getFvStatus = function(url,cb){
         var ceclient = this;
@@ -150,7 +170,7 @@ function CEClient() {
                 if(cb) {cb(res.status);}
             }
         );
-    }
+    };
 
     /**
      * http://docs.ceapi1.apiary.io/#facevideos
@@ -176,7 +196,7 @@ function CEClient() {
             }
         );
 
-    }
+    };
 
 
 
@@ -198,14 +218,14 @@ function CEClient() {
         var ceclient = this;
         var url = "facevideo/"+responseId;
         this.getFvStatus(url, cb);
-    }
+    };
 
     /**
      * Console log
      * @param msg
      */
     function ce_log(msg) {
-        if (window.console) {
+        if (window.console && console.log) {
             var now = Date.now();
             console.log('CE JS API [' + now + ', ' + String("000000" + (now - this.last_ms)).slice(-6) + ']: ' +  msg);
             console.log(msg);
@@ -225,7 +245,10 @@ function CEClient() {
 
 
 javaRest.protocol = "https";
+//Production domain
 javaRest.domain = "api.crowdemotion.co.uk";
+//Sandbox domain
+javaRest.domainSandbox = "api-sandbox.crowdemotion.co.uk";
 javaRest.version = "v1";
 javaRest.debug = false;
 javaRest.token = null;
@@ -234,14 +257,21 @@ javaRest.userId = null;
 /**
  * Singleton used for Namespace
  */
-function javaRest(debug, http_fallback) {
+function javaRest(debug, http_fallback, domain) {
     if(debug==undefined) debug = false;
-    if(http_fallback==undefined) http_fallback = false;
+    if(http_fallback===undefined) http_fallback = false;
+    if(!domain) domain = "api.crowdemotion.co.uk";
 
     javaRest.debug = debug;
+    javaRest.domain = domain;
+    javaRest.protocol = 'https';
 
-    if(http_fallback) {
+    if(http_fallback === null) {
+        javaRest.protocol = 'http';
+    }
+    if(http_fallback === true) {
         var connection = javaRest.httpGet('https://'+javaRest.domain+'/');
+
         if (connection) {
             javaRest.protocol = 'https';
         } else {
@@ -263,18 +293,18 @@ javaRest.httpGet = function (theUrl){
         return false;
     }
 
-}
+};
 
 javaRest.baseurl = function(){
     return this.protocol + '://' + this.domain + '/' + this.version + '/';
-}
+};
 javaRest.actionurl = function(actionurl){
     var s = actionurl;
     var n = s.indexOf('?');
     actionurl = s.substring(0, n != -1 ? n : s.length);
-    console.log('action url: '+ javaRest.version + '/'+ actionurl)
+    console.log('action url: '+ javaRest.version + '/'+ actionurl);
     return javaRest.version + '/'+ actionurl;
-}
+};
 
 javaRest.getAuthData = function(method, url) {
 
@@ -296,7 +326,7 @@ javaRest.getAuthData = function(method, url) {
     ret.authorization = uId + ':' + javaRest.hash(string_to_hash);
 
     return ret;
-}
+};
 
 /**
  * Wrap the API so we can proxy calls while testing.
@@ -317,13 +347,13 @@ javaRest.get = function (url, data, success, error) {
             'nonce' : auth.nonce
         },
         dataType: "json"
-    })
+    });
 
-    request.done(success)
+    request.done(success);
 
     request.fail(error)
 
-}
+};
 
 function makeRandomString() {
     return Math.random().toString(36).substring(2, 15) +
@@ -335,7 +365,7 @@ function makeRandomString() {
  * @return {string} 2012-06-30T12:00:00+01:00
  */
 javaRest.get_iso_date = function () {
-    var d = new Date()
+    var d = new Date();
     function pad(n) {return n<10 ? '0'+n : n}
     return d.getUTCFullYear()+'-'
         + pad(d.getUTCMonth()+1)+'-'
@@ -343,7 +373,7 @@ javaRest.get_iso_date = function () {
         + pad(d.getUTCHours())+':'
         + pad(d.getUTCMinutes())+':'
         + pad(d.getUTCSeconds())+'Z'
-}
+};
 
 /**
  * Get a query string var
@@ -351,15 +381,15 @@ javaRest.get_iso_date = function () {
  * @return {string}
  */
 javaRest.get_query = function (name) {
-    var query = window.location.search.substring(1)
-    var vars = query.split('&')
+    var query = window.location.search.substring(1);
+    var vars = query.split('&');
     for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split('=')
+        var pair = vars[i].split('=');
         if (decodeURIComponent(pair[0]) == name) {
             return decodeURIComponent(pair[1])
         }
     }
-}
+};
 
 /**
  * SHA256, then base64 encode a string
@@ -367,9 +397,9 @@ javaRest.get_query = function (name) {
  * @return {string}
  */
 javaRest.hash = function (string) {
-    var hash = CryptoJS.SHA256(string)
+    var hash = CryptoJS.SHA256(string);
     return hash.toString(CryptoJS.enc.Base64)
-}
+};
 
 /**
  * Is the visitor on iPhone or Ipad?
@@ -377,7 +407,7 @@ javaRest.hash = function (string) {
  */
 javaRest.isIos = function () {
     return (navigator.userAgent.match(/iPad|iPhone|iPod/i) != null)
-}
+};
 
 /**
  * Wrap the API so we can proxy calls while testing.
@@ -396,7 +426,7 @@ javaRest.post = function (url, data, success, error) {
     })
 
 
-}
+};
 
 /**
  * Post with authentication
@@ -420,7 +450,7 @@ javaRest.postAuth = function (url, data, success, error) {
         success : success,
         error : error
     })
-}
+};
 
 javaRest.postAuthForm = function (url, form_id) {
 
@@ -430,7 +460,7 @@ javaRest.postAuthForm = function (url, form_id) {
         attr('action', this.baseurl()+url+'?Authorization='+encodeURIComponent(auth.authorization) +
             '&x-ce-rest-date='+encodeURIComponent(auth.time) + '&nonce='+encodeURIComponent(auth.nonce)).
         submit();
-}
+};
 
 /**
  * Wrap the API so we can proxy calls while testing.
@@ -456,7 +486,7 @@ javaRest.put = function (url, data, success, error) {
     })
 
 
-}
+};
 
 /**
  * Holds cookie methods
@@ -469,14 +499,14 @@ javaRest.cookie = {};
  * @return {string}
  */
 javaRest.cookie.get = function (name) {
-    var pairs = document.cookie.split(/\; /g)
-    var cookie = {}
+    var pairs = document.cookie.split(/\; /g);
+    var cookie = {};
     for (var i in pairs) {
-        var parts = pairs[i].split(/\=/)
+        var parts = pairs[i].split(/\=/);
         cookie[parts[0]] = unescape(parts[1])
     }
     return cookie[name]
-}
+};
 
 /**
  * Delete a cookie
@@ -484,7 +514,7 @@ javaRest.cookie.get = function (name) {
  */
 javaRest.cookie.remove = function (name) {
     document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-}
+};
 
 /**
  * Set a cookie
@@ -494,11 +524,12 @@ javaRest.cookie.remove = function (name) {
 javaRest.cookie.set = function (name, value) {
     // document.cookie = "name=value[; expires=UTCString][; domain=domainName][; path=pathName][; secure]";
     document.cookie = name + '=' + value;
-}
+};
 
 
 
 javaRest.user = {};
+javaRest.response = {};
 
 
 /**
@@ -523,19 +554,19 @@ javaRest.user.create = function (firstName, emailAddress, password, lastName, ca
             "password" : password
         },
         function (response) {
-            javaRest.cookie.set('token', response.token)
+            javaRest.cookie.set('token', response.token);
             this.token = response.token;
-            javaRest.cookie.set('userId', response.userId)
+            javaRest.cookie.set('userId', response.userId);
             this.userId = response.userId;
-            javaRest.cookie.set('email', emailAddress)
+            javaRest.cookie.set('email', emailAddress);
             callback()
         },
         function(jqXHR, textStatus) {
-            console.log(jqXHR)
+            console.log(jqXHR);
             callback(jqXHR)
         })
 
-}
+};
 
 
 /**
@@ -548,19 +579,19 @@ javaRest.user.download = function (callback) {
         'user/' + javaRest.cookie.get('userId'),
         {},
         function (response) {
-            console.log(response)
+            console.log(response);
 
-            javaRest.user.user = response
+            javaRest.user.user = response;
 
             // If the cached version is the same as the most recent
             // version, just return. Else, we will run the callback.
             var sResponse = JSON.stringify(response);
             if (store.get('userResponse') === sResponse) {
-                console.log('cached')
+                console.log('cached');
                 return false
             }
 
-            store.set('userResponse', sResponse)
+            store.set('userResponse', sResponse);
 
             if (callback)
                 callback()
@@ -570,7 +601,7 @@ javaRest.user.download = function (callback) {
                 callback(jqXHR)
         })
 
-}
+};
 
 /**
  * Get user info
@@ -579,30 +610,30 @@ javaRest.user.download = function (callback) {
 javaRest.user.get = function (callback) {
 
 
-    var userResponse = store.get('userResponse')
+    var userResponse = store.get('userResponse');
 
 
     if (userResponse) {
-        var response = JSON.parse(userResponse)
-        javaRest.user.user = response
+
+        javaRest.user.user = JSON.parse(userResponse);
         // We still download the latest data in the background to make sure
         // cache is current. But we return immediately.
-        javaRest.user.download()
-        callback()
-        return
+        javaRest.user.download();
+        callback();
+        return;
     }
 
 
     javaRest.user.download(callback)
 
-}
+};
 
 /**
  * @return {bool}
  */
 javaRest.user.is_logged_in = function () {
     return (!!javaRest.cookie.get('token') || !!this.token)
-}
+};
 
 /**
  * Log the user in
@@ -625,6 +656,9 @@ javaRest.user.login = function (email, password, callback) {
             javaRest.userId = response.userId;
             javaRest.cookie.set('email', email);
             response.success = true;
+            if(response.userId==undefined){
+                response.success = false;
+            }
             callback(response)
 
         },
@@ -633,7 +667,7 @@ javaRest.user.login = function (email, password, callback) {
             callback(jqXHR)
         })
 
-}
+};
 
 /**
  * Log the user in via facebook
@@ -648,9 +682,9 @@ javaRest.user.loginSocial = function (accessToken, callback) {
             "accessToken" : accessToken
         },
         function (response) {
-            javaRest.cookie.set('token', response.token)
+            javaRest.cookie.set('token', response.token);
             javaRest.token = response.token;
-            javaRest.cookie.set('userId', response.userId)
+            javaRest.cookie.set('userId', response.userId);
             javaRest.userId = response.userId;
             callback()
 
@@ -659,7 +693,7 @@ javaRest.user.loginSocial = function (accessToken, callback) {
             callback(jqXHR)
         })
 
-}
+};
 
 
 /**
@@ -673,7 +707,7 @@ javaRest.user.logout = function () {
     javaRest.cookie.remove('email');
     store.clear();
     //window.location = 'index.html'
-}
+};
 
 /**
  * Delete the users cookies.
@@ -690,7 +724,7 @@ javaRest.user.reset_password = function (token, password, callback) {
         function(jqXHR, textStatus) {
             callback(jqXHR)
         })
-}
+};
 
 /**
  * Delete the users cookies.
@@ -708,7 +742,7 @@ javaRest.user.send_reset_email = function (email, callback) {
         function(jqXHR, textStatus) {
             callback(jqXHR)
         })
-}
+};
 
 
 
@@ -725,21 +759,130 @@ javaRest.user.updateName = function (value, callback) {
             "firstName" : value
         },
         function (response) {
-            console.log(response)
+            console.log(response);
             if (callback)
-                callback()
+                callback();
             // Clear user cache
             javaRest.user.download()
         },
         function(jqXHR, textStatus) {
             if (callback)
-                callback(jqXHR)
+                callback(jqXHR);
             // Clear user cache
             javaRest.user.download()
         })
+};
+
+javaRest.response.readCustomData = function(id, callback) {
+
+};
+
+javaRest.HashTable = function(obj)
+{
+    this.length = 0;
+    this.items = {};
+    for (var p in obj) {
+        if (obj.hasOwnProperty(p)) {
+            this.items[p] = obj[p];
+            this.length++;
+        }
+    }
+
+    this.setItem = function(key, value)
+    {
+        var previous = undefined;
+        if (this.hasItem(key)) {
+            previous = this.items[key];
+        }
+        else {
+            this.length++;
+        }
+        this.items[key] = value;
+        return previous;
+    }
+
+    this.getItem = function(key) {
+        return this.hasItem(key) ? this.items[key] : undefined;
+    }
+
+    this.hasItem = function(key)
+    {
+        return this.items.hasOwnProperty(key);
+    }
+
+    this.removeItem = function(key)
+    {
+        if (this.hasItem(key)) {
+            previous = this.items[key];
+            this.length--;
+            delete this.items[key];
+            return previous;
+        }
+        else {
+            return undefined;
+        }
+    }
+
+    this.keys = function()
+    {
+        var keys = [];
+        for (var k in this.items) {
+            if (this.hasItem(k)) {
+                keys.push(k);
+            }
+        }
+        return keys;
+    }
+
+    this.values = function()
+    {
+        var values = [];
+        for (var k in this.items) {
+            if (this.hasItem(k)) {
+                values.push(this.items[k]);
+            }
+        }
+        return values;
+    }
+
+    this.each = function(fn) {
+        for (var k in this.items) {
+            if (this.hasItem(k)) {
+                fn(k, this.items[k]);
+            }
+        }
+    }
+
+    this.clear = function()
+    {
+        this.items = {}
+        this.length = 0;
+    }
 }
 
- javaRest.facevideo = {}
+javaRest.response.writeCustomData = function(id, data, callback) {
+
+    var dataApi = new javaRest.HashTable(data);
+    dataApi = {'data':dataApi.items}
+
+    javaRest.postAuth(
+        'response/'+id+'/metadata',
+        dataApi,
+        function(response) {
+            if (callback) {
+                callback(response);
+            }
+        },
+        function(jqXHR, textStatus) {
+            console.log(jqXHR);
+            if (callback) {
+                callback(jqXHR);
+            }
+        }
+    );
+};
+
+javaRest.facevideo = {};
 
 
 /**
@@ -768,7 +911,7 @@ javaRest.facevideo.uploadLink = function(videoLink, callback) {
             }
         }
     )
-}
+};
 
 javaRest.facevideo.info = function(response_id, callback) {
 
@@ -780,13 +923,13 @@ javaRest.facevideo.info = function(response_id, callback) {
             }
         },
         function(jqXHR, textStatus) {
-            console.log(jqXHR);
+            //console.log(jqXHR);
             if (callback) {
                 callback(jqXHR);
             }
         }
     )
-}
+};
 
 /**
  * Upload a facevideo via file
@@ -805,20 +948,20 @@ javaRest.facevideo.upload = function(file, callback) {
             }
         },
         function(jqXHR, textStatus) {
-            console.log(jqXHR)
+            //console.log(jqXHR);
             callback(jqXHR)
         }
     )
-}
+};
 
 javaRest.facevideo.uploadForm = function(form_id) {
 
     javaRest.postAuthForm('facevideo/upload', form_id);
 
-}
+};
 
 
-javaRest.verify = {}
+javaRest.verify = {};
 
 /**
  * Sends an email to user for verification
@@ -830,13 +973,13 @@ javaRest.verify.request_email = function (email, callback) {
             'emailAddress' : email
         },
         function (response) {
-            console.log(response)
+            console.log(response);
             callback()
         },
         function(jqXHR, textStatus) {
             callback(jqXHR)
         })
-}
+};
 
 /**
  * Validate an email address.
@@ -851,5 +994,5 @@ javaRest.verify.verify = function (token, callback) {
         function(jqXHR, textStatus) {
             callback(jqXHR)
         })
-}
+};
 
