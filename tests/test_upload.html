@@ -33,7 +33,9 @@
                     function(loginSuccessful) {
                         //UPLOAD VIDEO
                         if (loginSuccessful) {
-                          ceclient.uploadForm('form_upload');
+                          ceclient.uploadFormAsync('form_upload', function (response) {
+                              $('#resultVideoUpload').text(JSON.stringify(response));
+                          });
                         } else {
                           console.log(ceclient.errorlog);
                         }
@@ -42,12 +44,20 @@
         });
     </script>
 
-    <form id="form_upload" method="post" enctype="multipart/form-data">
-        <input id="username" placeholder="username">
-        <input id="password" placeholder="password">
-        <input type="file" name="file" id="file" />
-        <input type="button" id="sendbutton" value="send">
-    </form>
+    <div style="margin-bottom:20px;">
+      <form id="form_upload" method="post" enctype="multipart/form-data">
+          <input id="username" placeholder="username" type="text" required="required">
+          <input id="password" placeholder="password" type="password" required="required">
+          <input type="file" name="filename" id="filename" />
+          <input type="button" id="sendbutton" value="send">
+      </form>
+    </div>
+
+    <div class="">
+      Result:
+      <br/>
+      <textarea id="resultVideoUpload" style="margin: 0px; width: 488px; height: 60px;"></textarea>
+    </div>
 
 </body>
 

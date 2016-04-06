@@ -74,6 +74,10 @@ function CEClient() {
         })(file);
     };
 
+    this.uploadFormAsync = function (form_id, callback) {
+      javaRest.facevideo.uploadFormAsync(form_id, callback);
+    }
+
     /**
      *
      * @param responseId numeric id
@@ -262,10 +266,10 @@ function javaRest(debug, http_fallback) {
 
 javaRest.httpFallbackCheck = function (url, callback){
     $.get(url)
-      .success(function (response) {
+      .done(function (response) {
           callback(response && response.status !== 404);
       })
-      .error(function (response) {
+      .fail(function (response) {
           callback(response && response.status !== 404);
       });
 };
@@ -433,6 +437,38 @@ javaRest.postAuthForm = function (url, form_id) {
             '&x-ce-rest-date='+encodeURIComponent(auth.time) + '&nonce='+encodeURIComponent(auth.nonce)).
         submit();
 }
+
+javaRest.postFormAsync = function(url, form_id, callback) {
+    var auth = javaRest.getAuthData('POST', url);
+
+    var form = new FormData($('#'+form_id)[0]);
+
+    var settings = {
+      "async": true,
+      "crossDomain": true,
+      "url": this.baseurl()+url,
+      "method": "POST",
+      "headers": {
+        "Authorization": auth.authorization,
+        "x-ce-rest-date": auth.time,
+        "nonce": auth.nonce,
+        "cache-control": "no-cache"
+      },
+      "processData": false,
+      "contentType": false,
+      "mimeType": "multipart/form-data",
+      "data": form,
+      "dataType": "json"
+    }
+
+    $.ajax(settings)
+    .done(function (response) {
+        callback(response);
+    })
+    .fail(function (response) {
+        callback(response);
+    });
+};
 
 /**
  * Wrap the API so we can proxy calls while testing.
@@ -605,12 +641,12 @@ javaRest.user.is_logged_in = function () {
  * @param {string}
  * @param {function} Callback. First parameter is error, if any.
  */
-javaRest.user.login = function (email, password, callback) {
+javaRest.user.login = function (username, password, callback) {
 
     javaRest.post(
         'user/login',
         {
-            "username" : email,
+            "username" : username,
             "password" : password
         },
         function (response) { //success
@@ -618,7 +654,7 @@ javaRest.user.login = function (email, password, callback) {
             javaRest.token = response.token;
             javaRest.cookie.set('userId', response.userId);
             javaRest.userId = response.userId;
-            javaRest.cookie.set('email', email);
+            javaRest.cookie.set('email', username);
             response.success = true;
             callback(response)
         },
@@ -810,6 +846,10 @@ javaRest.facevideo.uploadForm = function(form_id) {
     javaRest.postAuthForm('facevideo/upload', form_id);
 
 }
+
+javaRest.facevideo.uploadFormAsync = function(form_id, callback) {
+    javaRest.postFormAsync('facevideo', form_id, callback);
+};
 
 
 javaRest.verify = {}
