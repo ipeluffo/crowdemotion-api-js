@@ -1,56 +1,54 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Crowdemotion JS rest api</title>
 </head>
+
 <body>
-<script src="../src/jquery.min.js"></script>
-<script src="../src/sha256.js"></script>
-<script src="../src/enc-base64-min.js"></script>
-<script src="../src/store.js"></script>
-<script src="../src/CEClient.js"></script>
-<script>
+    <script src="../src/jquery.min.js"></script>
+    <script src="../src/sha256.js"></script>
+    <script src="../src/enc-base64-min.js"></script>
+    <script src="../src/store.js"></script>
+    <script src="../src/CEClient.js"></script>
+    <script>
+        $(document).ready(function() {
 
-
-
-
-
-    $(document).ready(function(){
-
-        var ceclient = new CEClient();
-
-
-        //LOGOUT
-        var execLogout = function(res){
-            console.log('Results from timeseries');
-            console.log(res);
-            console.log('LOGOUT');
-            ceclient.logout();
-        };
-
-
-        $('#sendbutton').click(function(){
-            //ceclient.sendFile("fileinput");
-//LOGIN
-            console.log('LOGGING IN');
+            var ceclient = new CEClient();
             ceclient.init(true, true);
-            ceclient.login($('#username').val(),$('#password').val(),
-                    function(){
+
+            //LOGOUT
+            var execLogout = function(res) {
+                console.log('Results from timeseries');
+                console.log(res);
+                console.log('LOGOUT');
+                ceclient.logout();
+            };
+
+            $('#sendbutton').click(function() {
+                //ceclient.sendFile("fileinput");
+                //LOGIN
+                console.log('LOGGING IN');
+                ceclient.login($('#username').val(), $('#password').val(),
+                    function(loginSuccessful) {
                         //UPLOAD VIDEO
-                        console.log(ceclient.errorlog);
+                        if (loginSuccessful) {
+                          ceclient.uploadForm('form_upload');
+                        } else {
+                          console.log(ceclient.errorlog);
+                        }
                     });
-            ceclient.uploadForm('form_upload');
+            });
         });
-    });
+    </script>
 
-</script>
-
-<form id="form_upload" method="post" enctype="multipart/form-data">
-    <input id="username" placeholder="username">
-    <input id="password"  placeholder="password">
-    <input type="file" name="file" id="file" />
-    <input type="button" id="sendbutton" value="send">
-</form>
+    <form id="form_upload" method="post" enctype="multipart/form-data">
+        <input id="username" placeholder="username">
+        <input id="password" placeholder="password">
+        <input type="file" name="file" id="file" />
+        <input type="button" id="sendbutton" value="send">
+    </form>
 
 </body>
+
 </html>
