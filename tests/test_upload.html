@@ -6,7 +6,8 @@
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 
-    <!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script> -->
+    <script src="../src/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
     <style media="screen">
       body {
@@ -16,7 +17,6 @@
 </head>
 
 <body>
-    <script src="../src/jquery.min.js"></script>
     <script src="../src/sha256.js"></script>
     <script src="../src/enc-base64-min.js"></script>
     <script src="../src/store.js"></script>
@@ -43,9 +43,19 @@
                     function(loginSuccessful) {
                         //UPLOAD VIDEO
                         if (loginSuccessful) {
-                          ceclient.sendFile('filename', function (response) {
-                            $('#resultVideoUpload').text(JSON.stringify(response));
-                          });
+                          $('#videoUploadModal').modal('show')
+
+                          var researchId = $('#researchId').val();
+                          var file = document.getElementById('filename').files[0];
+
+                          if (file && researchId) {
+                            ceclient.sendFile('filename', researchId, function (response) {
+                              $('#resultVideoUpload').text(JSON.stringify(response));
+                              $('#videoUploadModal').modal('hide')
+                            });
+                          } else {
+                            $('#videoUploadModal').modal('hide')
+                          }
                         } else {
                           console.log(ceclient.errorlog);
                         }
@@ -119,6 +129,19 @@
         <div class="col-md-3"></div>
       </div>
     </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="videoUploadModal">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Video uploading...</h4>
+          </div>
+          <div class="modal-body">
+            <p>Please wait, video file is uploading ...</p>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
 </body>
 

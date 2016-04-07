@@ -59,12 +59,12 @@ function CEClient() {
         javaRest.facevideo.uploadForm(form_id);
     };
 
-    this.sendFile = function (fileInputId, callback){
+    this.sendFile = function (fileInputId, researchId, callback){
         var ceclient = this;
 
         var file = document.getElementById(fileInputId).files[0];
-        if (file) {
-          javaRest.facevideo.upload(file, function (res){
+        if (file && researchId) {
+          javaRest.facevideo.upload(file, researchId, function (res){
               ceclient.responseId = res.responseId;
               if(callback) callback(res);
           });
@@ -425,8 +425,20 @@ javaRest.postAuth = function (url, data, success, error) {
     });
 };
 
-javaRest.postFile = function (url, filename, file, success, error) {
+javaRest.buildQueryParamsString = function (queryParams) {
+  var queryParamsUrl = "";
+  for (var queryParam in queryParams) {
+    queryParamsUrl += "&" + queryParam + "=" + encodeURIComponent(queryParams[queryParam]);
+  }
+
+  return queryParamsUrl.slice(1);
+}
+
+javaRest.postFile = function (url, queryParams, filename, file, success, error) {
     var auth = javaRest.getAuthData('POST', url);
+
+    var queryParamsString = javaRest.buildQueryParamsString(queryParams);
+    var requestUrl = this.baseurl() + url + '?' + queryParamsString;
 
     var form = new FormData();
     form.append(filename, file);
@@ -434,7 +446,7 @@ javaRest.postFile = function (url, filename, file, success, error) {
     var settings = {
       "async": true,
       "crossDomain": true,
-      "url": this.baseurl()+url,
+      "url": requestUrl,
       "method": "POST",
       "headers": {
         "Authorization": auth.authorization,
@@ -852,9 +864,10 @@ javaRest.facevideo.info = function(response_id, callback) {
  * @param file
  * @param callback
  */
-javaRest.facevideo.upload = function(file, callback) {
+javaRest.facevideo.upload = function(file, researchId, callback) {
     javaRest.postFile(
       'facevideo/upload',
+      { "research_id" : researchId },
       'filename',
       file,
       function (response) {
