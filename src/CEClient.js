@@ -59,19 +59,16 @@ function CEClient() {
         javaRest.facevideo.uploadForm(form_id);
     };
 
-    this.sendFile =function (element_id, cb){
+    this.sendFile = function (fileInputId, callback){
         var ceclient = this;
 
-        var file = document.getElementById(element_id).files[0]; //Files[0] = 1st file
-        var reader = new FileReader();
-        reader.readAsText(file, 'UTF-8');
-        reader.onload = (function(theFile){
-            //var fileName = theFile.name;
-            javaRest.facevideo.upload(theFile, function (res){
-                ceclient.responseId = res.responseId;
-                if(cb) cb(res);
-            });
-        })(file);
+        var file = document.getElementById(fileInputId).files[0];
+        if (file) {
+          javaRest.facevideo.upload(file, function (res){
+              ceclient.responseId = res.responseId;
+              if(callback) callback(res);
+          });
+        }
     };
 
     this.uploadFormAsync = function (form_id, callback) {
@@ -428,8 +425,40 @@ javaRest.postAuth = function (url, data, success, error) {
     });
 };
 
-javaRest.postAuthForm = function (url, form_id) {
+javaRest.postFile = function (url, filename, file, success, error) {
+    var auth = javaRest.getAuthData('POST', url);
 
+    var form = new FormData();
+    form.append(filename, file);
+
+    var settings = {
+      "async": true,
+      "crossDomain": true,
+      "url": this.baseurl()+url,
+      "method": "POST",
+      "headers": {
+        "Authorization": auth.authorization,
+        "x-ce-rest-date": auth.time,
+        "nonce": auth.nonce,
+        "cache-control": "no-cache"
+      },
+      "processData": false,
+      "contentType": false,
+      "mimeType": "multipart/form-data",
+      "data": form,
+      "dataType": "json"
+    }
+
+    $.ajax(settings)
+    .done(function (response) {
+        success(response);
+    })
+    .fail(function (jqXHR, textStatus, errorThrown) {
+        error(jqXHR);
+    });
+}
+
+javaRest.postAuthForm = function (url, form_id) {
     var auth = javaRest.getAuthData('POST', url);
 
     $('#'+form_id).
@@ -824,21 +853,19 @@ javaRest.facevideo.info = function(response_id, callback) {
  * @param callback
  */
 javaRest.facevideo.upload = function(file, callback) {
-
-
-    javaRest.postAuth(
-        'facevideo/upload',
-        {'file': file},
-        function(response) {
-            if (callback) {
-                callback();
-            }
-        },
-        function(jqXHR, textStatus) {
-            console.log(jqXHR)
-            callback(jqXHR)
+    javaRest.postFile(
+      'facevideo/upload',
+      'filename',
+      file,
+      function (response) {
+        if (callback) {
+          callback(response);
         }
-    )
+      },
+      function (jqXHR) {
+        callback(jqXHR);
+      }
+    );
 }
 
 javaRest.facevideo.uploadForm = function(form_id) {

@@ -33,8 +33,8 @@
                     function(loginSuccessful) {
                         //UPLOAD VIDEO
                         if (loginSuccessful) {
-                          ceclient.uploadFormAsync('form_upload', function (response) {
-                              $('#resultVideoUpload').text(JSON.stringify(response));
+                          ceclient.sendFile('filename', function (response) {
+                            $('#resultVideoUpload').text(JSON.stringify(response));
                           });
                         } else {
                           console.log(ceclient.errorlog);
