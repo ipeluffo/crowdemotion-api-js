@@ -17,53 +17,6 @@
 </head>
 
 <body>
-    <script src="../src/sha256.js"></script>
-    <script src="../src/enc-base64-min.js"></script>
-    <script src="../src/store.js"></script>
-    <script src="../src/CEClient.js"></script>
-    <script>
-        $(document).ready(function() {
-
-            var ceclient = new CEClient();
-            ceclient.init(true, true);
-
-            //LOGOUT
-            var execLogout = function(res) {
-                console.log('Results from timeseries');
-                console.log(res);
-                console.log('LOGOUT');
-                ceclient.logout();
-            };
-
-            $('#sendbutton').click(function() {
-                //ceclient.sendFile("fileinput");
-                //LOGIN
-                console.log('LOGGING IN');
-                ceclient.login($('#username').val(), $('#password').val(),
-                    function(loginSuccessful) {
-                        //UPLOAD VIDEO
-                        if (loginSuccessful) {
-                          $('#videoUploadModal').modal('show')
-
-                          var researchId = $('#researchId').val();
-                          var file = document.getElementById('filename').files[0];
-
-                          if (file && researchId) {
-                            ceclient.sendFile('filename', researchId, function (response) {
-                              $('#resultVideoUpload').text(JSON.stringify(response));
-                              $('#videoUploadModal').modal('hide')
-                            });
-                          } else {
-                            $('#videoUploadModal').modal('hide')
-                          }
-                        } else {
-                          console.log(ceclient.errorlog);
-                        }
-                    });
-            });
-        });
-    </script>
-
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
@@ -121,6 +74,11 @@
         <div class="col-md-3"></div>
 
         <div class="col-md-6">
+          <div class="alert alert-danger alert-dismissible" role="alert" id="errorsPanel" style="display:none;">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <ul id="errorsPanelMessage"></ul>
+          </div>
+
           Result:
           <br/>
           <textarea id="resultVideoUpload" style="margin: 0px; width: 488px; height: 60px;"></textarea>
@@ -142,6 +100,95 @@
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
+
+    <script src="../src/sha256.js"></script>
+    <script src="../src/enc-base64-min.js"></script>
+    <script src="../src/store.js"></script>
+    <script src="../src/CEClient.js"></script>
+    <script>
+        var ceclient = new CEClient();
+        ceclient.init(true, true);
+
+        //LOGOUT
+        var execLogout = function(res) {
+            console.log('Results from timeseries');
+            console.log(res);
+            console.log('LOGOUT');
+            ceclient.logout();
+        };
+
+        var requiredTextInputs = {
+          'username': 'Username is required',
+          'password': 'Password is required',
+          'researchId': 'Research ID is required'
+        };
+        var requiredFileInputs = {
+          'filename': 'A file must be selected'
+        };
+
+        function checkRequiredInputs() {
+          var input;
+          var errors = [];
+
+          for (var inputId in requiredTextInputs) {
+            input = $('#'+inputId).val().trim();
+            if (!input) {
+              errors.push(inputId);
+            }
+          }
+
+          for (inputId in requiredFileInputs) {
+            input = $('#'+inputId)[0];
+            if (!input || !input.files || input.files.length < 1) {
+              errors.push(inputId);
+            }
+          }
+
+          return errors;
+        }
+
+        $('#sendbutton').click(function() {
+            $('#errorsPanel').hide();
+            var errors = checkRequiredInputs();
+
+            if (errors.length === 0) {
+              console.log('LOGGING IN');
+              ceclient.login($('#username').val(), $('#password').val(),
+                function(loginSuccessful) {
+                    if (loginSuccessful) {
+                      $('#videoUploadModal').modal('show')
+
+                      var researchId = $('#researchId').val();
+                      var file = document.getElementById('filename').files[0];
+
+                      if (file && researchId) {
+                        ceclient.sendFile('filename', researchId, function (response) {
+                          $('#resultVideoUpload').text(JSON.stringify(response));
+                          $('#videoUploadModal').modal('hide')
+                        });
+                      } else {
+                        $('#videoUploadModal').modal('hide')
+                      }
+                    } else {
+                      console.log(ceclient.errorlog);
+                    }
+                });
+
+            } else {
+
+              var errorsMessage = "";
+              for (var i = 0; i < errors.length; i++) {
+                if (errors[i] in requiredTextInputs) {
+                  errorsMessage += '<li>' + requiredTextInputs[errors[i]] + '</li>';
+                } else {
+                  errorsMessage += '<li>' + requiredFileInputs[errors[i]] + '</li>';
+                }
+              }
+              $('#errorsPanelMessage').html(errorsMessage);
+              $('#errorsPanel').show();
+            }
+        });
+    </script>
 
 </body>
 
